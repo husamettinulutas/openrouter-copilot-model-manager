@@ -3,7 +3,19 @@
   "displayName": "OpenRouter Copilot Model Manager",
   "description": "Browse, filter, and add OpenRouter models to VS Code Copilot Chat with a rich visual interface. Supports pricing display, capability filtering (text/vision/tools), and one-click Copilot integration.",
   "version": "1.0.0",
-  "publisher": "husamettin",
+  "publisher": "husamettinulutas",
+  "author": {
+    "name": "Hüsamettin Ulutaş",
+    "url": "https://github.com/husamettinulutas"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/husamettinulutas/openrouter-copilot-model-manager.git"
+  },
+  "homepage": "https://github.com/husamettinulutas/openrouter-copilot-model-manager#readme",
+  "bugs": {
+    "url": "https://github.com/husamettinulutas/openrouter-copilot-model-manager/issues"
+  },
   "icon": "resources/icon.png",
   "engines": {
     "vscode": "^1.95.0"
