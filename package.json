@@ -1,0 +1,148 @@
+{
+  "name": "openrouter-copilot-model-manager",
+  "displayName": "OpenRouter Copilot Model Manager",
+  "description": "Browse, filter, and add OpenRouter models to VS Code Copilot Chat with a rich visual interface. Supports pricing display, capability filtering (text/vision/tools), and one-click Copilot integration.",
+  "version": "1.0.0",
+  "publisher": "husamettin",
+  "icon": "resources/icon.png",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Other"
+  ],
+  "keywords": [
+    "openrouter",
+    "copilot",
+    "ai",
+    "language model",
+    "chat",
+    "llm",
+    "model manager"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languageModelChatProviders": [
+      {
+        "vendor": "openrouter-copilot-model-manager",
+        "displayName": "OpenRouter"
+      }
+    ],
+    "commands": [
+      {
+        "command": "openrouter-copilot.openBrowser",
+        "title": "OpenRouter: Browse Models",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "openrouter-copilot.setApiKey",
+        "title": "OpenRouter: Set API Key",
+        "icon": "$(key)"
+      },
+      {
+        "command": "openrouter-copilot.syncModels",
+        "title": "OpenRouter: Sync Models from API",
+        "icon": "$(sync)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "openrouter-explorer",
+          "title": "OpenRouter",
+          "icon": "$(sparkle)"
+        }
+      ]
+    },
+    "views": {
+      "openrouter-explorer": [
+        {
+          "id": "openrouter-browse",
+          "name": "Model Browser",
+          "type": "webview"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "openrouter-copilot.syncModels",
+          "when": "view == openrouter-browse",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "OpenRouter Model Manager",
+      "properties": {
+        "openrouterModelManager.cache.ttlMinutes": {
+          "type": "number",
+          "default": 60,
+          "description": "How many minutes before the model cache is considered stale and automatically refreshed.",
+          "minimum": 1
+        },
+        "openrouterModelManager.requestTimeoutSeconds": {
+          "type": "number",
+          "default": 60,
+          "description": "Maximum time in seconds to wait for a response from OpenRouter before timing out.",
+          "minimum": 10,
+          "maximum": 300
+        },
+        "openrouterModelManager.maxRetries": {
+          "type": "number",
+          "default": 3,
+          "description": "Maximum number of retry attempts for failed requests (rate limits, server errors).",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "openrouterModelManager.defaultTemperature": {
+          "type": ["number", "null"],
+          "default": null,
+          "description": "Default temperature for model responses (0.0 = deterministic, 2.0 = creative). Leave empty to use model default.",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "openrouterModelManager.defaultMaxTokens": {
+          "type": ["number", "null"],
+          "default": null,
+          "description": "Default maximum output tokens. Leave empty to use model default.",
+          "minimum": 1
+        },
+        "openrouterModelManager.apiEndpoint": {
+          "type": "string",
+          "default": "https://openrouter.ai/api/v1",
+          "description": "OpenRouter API base URL. Change this if using a self-hosted proxy or custom endpoint."
+        },
+        "openrouterModelManager.logLevel": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error"],
+          "default": "info",
+          "description": "Minimum log level for the OpenRouter output channel.",
+          "enumDescriptions": [
+            "Show all messages including debug details",
+            "Show informational messages and above",
+            "Show warnings and errors only",
+            "Show errors only"
+          ]
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
+    "package": "npx @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.95.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.5.0"
+  }
+}

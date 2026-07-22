@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline'; font-src {{cspSource}};">
+  <title>OpenRouter Copilot Model Manager</title>
+  <link rel="stylesheet" href="{{variablesCssUri}}">
+  <link rel="stylesheet" href="{{mainCssUri}}">
+  <link rel="stylesheet" href="{{cardsCssUri}}">
+  <link rel="stylesheet" href="{{animationsCssUri}}">
+</head>
+<body>
+  <div class="app">
+
+    <!-- API Key Banner (shown when no key is set) -->
+    <div class="api-key-banner" id="apikey-banner" style="display:none;">
+      <span class="api-key-banner-icon">🔑</span>
+      <span class="api-key-banner-text">API key not set. Set your OpenRouter API key to browse and add models.</span>
+      <button class="btn btn-sm" id="apikey-banner-btn">Set Key</button>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <span class="header-logo">⚡</span>
+        <span class="header-title">OpenRouter Copilot Model Manager</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon" id="apikey-btn" title="Set API Key">🔑</button>
+        <button class="btn-icon" id="sync-btn" title="Sync models from OpenRouter">🔄</button>
+      </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-browse">🌐 Browse Models</button>
+      <button class="tab-btn" id="tab-active">
+        ✅ Active in Copilot
+        <span class="tab-badge" id="active-tab-count">0</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: BROWSE MODELS -->
+    <div class="tab-content active" id="tab-content-browse">
+      <!-- Search -->
+      <div class="search-section">
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            class="search-input"
+            id="search-input"
+            placeholder="Search models by name, provider, or ID..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="search-clear" id="search-clear" title="Clear search">✕</button>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <button class="filter-chip vision" id="filter-vision">
+          <span class="filter-chip-icon">👁️</span> Vision
+        </button>
+        <button class="filter-chip tools" id="filter-tools">
+          <span class="filter-chip-icon">🔧</span> Tools
+        </button>
+        <button class="filter-chip free" id="filter-free">
+          <span class="filter-chip-icon">✨</span> Free
+        </button>
+
+        <span class="filter-separator"></span>
+
+        <div class="provider-dropdown">
+          <button class="filter-chip" id="provider-filter-btn">🏢 Provider</button>
+          <div class="provider-dropdown-menu" id="provider-menu"></div>
+        </div>
+
+        <span class="filter-separator"></span>
+
+        <select class="sort-select" id="sort-select">
+          <option value="name-asc">Sort: Name A-Z</option>
+          <option value="price-asc">Sort: Price ↑</option>
+          <option value="price-desc">Sort: Price ↓</option>
+          <option value="context-desc">Sort: Context ↓</option>
+          <option value="newest">Sort: Newest</option>
+        </select>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="stats-bar">
+        <span class="stats-text">
+          Showing <span class="stats-count" id="stats-filtered">0</span>
+          of <span class="stats-count" id="stats-count">0</span> models
+        </span>
+      </div>
+
+      <!-- Model List -->
+      <div class="model-list-container" id="model-list-container">
+        <div class="model-list stagger-children" id="model-list">
+          <div class="empty-state">
+            <div class="empty-state-icon">⚡</div>
+            <div class="empty-state-title">Welcome!</div>
+            <div class="empty-state-desc">Set your API key and sync models to get started.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: ACTIVE IN COPILOT -->
+    <div class="tab-content" id="tab-content-active">
+      <div style="margin-bottom: var(--space-3); font-size: var(--font-size-sm); color: var(--text-muted);">
+        Models currently enabled in Copilot Chat under the <code>OpenRouter</code> provider. Click <b>Remove</b> to disable any model.
+      </div>
+      <div id="active-models-list">
+        <div class="empty-state">
+          <div class="empty-state-icon">📌</div>
+          <div class="empty-state-title">No Active Copilot Models</div>
+          <div class="empty-state-desc">Browse models in the first tab and click "Apply to Copilot" to add them.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Panel: Selected Models (Drafts to apply) -->
+    <div class="bottom-panel" id="bottom-panel">
+      <div class="bottom-panel-header" id="bottom-panel-toggle">
+        <div class="bottom-panel-title">
+          <span>📌 Selected Models (Draft)</span>
+          <span class="selected-count-badge" id="selected-count">0</span>
+        </div>
+        <div class="bottom-panel-actions">
+          <button class="btn btn-success btn-sm" id="apply-btn" disabled>
+            Apply to Copilot
+          </button>
+        </div>
+      </div>
+      <div class="bottom-panel-body" id="bottom-panel-body" style="display:block;">
+        <div class="selected-model-list" id="selected-model-list">
+          <div style="text-align:center; padding: var(--space-3); color: var(--text-muted); font-size: var(--font-size-sm);">
+            No models selected. Browse and add models above.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Fetching models from OpenRouter...</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+  </div>
+
+  <script src="{{vscodeApiJsUri}}"></script>
+  <script src="{{filtersJsUri}}"></script>
+  <script src="{{appJsUri}}"></script>
+</body>
+</html>
