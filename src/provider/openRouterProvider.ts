@@ -554,7 +554,6 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
           // ── Streaming success path ──
           let buffer = '';
           const pendingToolCalls = new Map<number, { id: string; name: string; arguments: string }>();
-          let isThinking = false;
           let usageData: any = null;
 
           res.on('data', (chunk) => {
@@ -568,11 +567,6 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
 
               const dataStr = trimmed.slice(6).trim();
               if (dataStr === '[DONE]') {
-                // End thinking block if still active
-                if (isThinking) {
-                  progress.report(new vscode.LanguageModelTextPart('\n\n---\n\n'));
-                  isThinking = false;
-                }
                 // Emit any remaining tool calls (some models send finish_reason before [DONE])
                 this.emitPendingToolCalls(pendingToolCalls, progress);
                 continue;
@@ -591,20 +585,13 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
                 // via delta.reasoning or delta.reasoning_content fields.
                 const reasoning = delta?.reasoning || delta?.reasoning_content;
                 if (reasoning) {
-                  if (!isThinking) {
-                    progress.report(new vscode.LanguageModelTextPart('\n\n💭 **Thinking...**\n\n'));
-                    isThinking = true;
-                  }
-                  progress.report(new vscode.LanguageModelTextPart(reasoning));
+                  progress.report(
+                    new vscode.LanguageModelThinkingPart(reasoning) as unknown as vscode.LanguageModelResponsePart,
+                  );
                 }
 
                 // ── Text content ──
                 if (delta?.content) {
-                  // Transition from thinking to response
-                  if (isThinking) {
-                    progress.report(new vscode.LanguageModelTextPart('\n\n---\n\n'));
-                    isThinking = false;
-                  }
                   progress.report(new vscode.LanguageModelTextPart(delta.content));
                 }
 
@@ -633,10 +620,6 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
           });
 
           res.on('end', () => {
-            // Safety net: close any open thinking block
-            if (isThinking) {
-              progress.report(new vscode.LanguageModelTextPart('\n\n---\n\n'));
-            }
             // Emit any remaining tool calls that weren't emitted
             this.emitPendingToolCalls(pendingToolCalls, progress);
 
