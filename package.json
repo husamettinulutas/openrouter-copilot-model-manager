@@ -2,7 +2,7 @@
   "name": "openrouter-copilot-model-manager",
   "displayName": "OpenRouter Copilot Model Manager",
   "description": "Browse, filter, and add OpenRouter models to VS Code Copilot Chat with a rich visual interface. Supports pricing display, capability filtering (text/vision/tools), and one-click Copilot integration.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "husamettinulutas",
   "author": {
     "name": "Hüsamettin Ulutaş",
@@ -38,9 +38,6 @@
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
-  "enabledApiProposals": [
-    "languageModelThinkingPart"
-  ],
   "contributes": {
     "languageModelChatProviders": [
       {
@@ -116,14 +113,20 @@
           "maximum": 10
         },
         "openrouterModelManager.defaultTemperature": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "default": null,
           "description": "Default temperature for model responses (0.0 = deterministic, 2.0 = creative). Leave empty to use model default.",
           "minimum": 0,
           "maximum": 2
         },
         "openrouterModelManager.defaultMaxTokens": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "default": null,
           "description": "Default maximum output tokens. Leave empty to use model default.",
           "minimum": 1
@@ -135,7 +138,12 @@
         },
         "openrouterModelManager.logLevel": {
           "type": "string",
-          "enum": ["debug", "info", "warn", "error"],
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
           "default": "info",
           "description": "Minimum log level for the OpenRouter output channel.",
           "enumDescriptions": [
