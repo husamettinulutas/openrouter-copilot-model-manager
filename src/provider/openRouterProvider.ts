@@ -55,6 +55,10 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
   /** Status bar item for displaying token usage statistics. */
   private _usageStatusBar?: vscode.StatusBarItem;
 
+  /** Whether the proposed `LanguageModelThinkingPart` API is available at runtime. */
+  private readonly _thinkingPartAvailable =
+    typeof (vscode as any).LanguageModelThinkingPart === 'function';
+
   constructor(
     private readonly cache: ModelCache,
     private readonly secrets: SecretsManager,
@@ -585,9 +589,7 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
                 // via delta.reasoning or delta.reasoning_content fields.
                 const reasoning = delta?.reasoning || delta?.reasoning_content;
                 if (reasoning) {
-                  progress.report(
-                    new vscode.LanguageModelThinkingPart(reasoning) as unknown as vscode.LanguageModelResponsePart,
-                  );
+                  this.reportReasoning(reasoning, progress);
                 }
 
                 // ── Text content ──
@@ -677,6 +679,24 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
   // ────────────────────────────────────────────────────────────────────────────
   // Tool call emission
   // ────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Report reasoning/thinking content. Uses the native `LanguageModelThinkingPart`
+   * (proposed API) when available so VS Code renders a collapsible reasoning section,
+   * and falls back to plain text where the proposed API is not enabled.
+   */
+  private reportReasoning(
+    reasoning: string,
+    progress: vscode.Progress<vscode.LanguageModelResponsePart>,
+  ): void {
+    if (this._thinkingPartAvailable) {
+      progress.report(
+        new vscode.LanguageModelThinkingPart(reasoning) as unknown as vscode.LanguageModelResponsePart,
+      );
+    } else {
+      progress.report(new vscode.LanguageModelTextPart(reasoning));
+    }
+  }
 
   /**
    * Emit accumulated tool calls as LanguageModelToolCallPart to VS Code.
