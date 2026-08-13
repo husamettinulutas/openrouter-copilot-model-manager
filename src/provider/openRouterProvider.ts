@@ -404,6 +404,15 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
       stream_options: { include_usage: true },
     };
 
+    // Enable OpenRouter automatic prompt caching. Anthropic models only cache
+    // when cache_control is present (otherwise every agent-mode turn re-bills
+    // the full conversation at full input price); OpenAI/Gemini cache
+    // automatically and ignore this field. OpenRouter advances the breakpoint
+    // as the conversation grows, which fits Copilot agent mode.
+    if (getConfig<boolean>('enablePromptCaching', true)) {
+      body.cache_control = { type: 'ephemeral' };
+    }
+
     if (tools && tools.length > 0) {
       body.tools = tools;
       body.tool_choice = toolChoice;
@@ -736,6 +745,8 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
     const prompt = usage.prompt_tokens || 0;
     const completion = usage.completion_tokens || 0;
     const total = usage.total_tokens || prompt + completion;
+    // OpenRouter reports cache hits under prompt_tokens_details.cached_tokens
+    const cached = usage.prompt_tokens_details?.cached_tokens || 0;
 
     // Calculate dollar cost using model pricing from cache
     const model = this.cache.getModel(modelId);
@@ -756,12 +767,13 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
       }
     }
 
-    Logger.info(`Usage [${modelId}]: ${prompt} prompt + ${completion} completion = ${total} total tokens${costText}`);
+    const cachedText = cached > 0 ? ` (${cached} cached)` : '';
+    Logger.info(`Usage [${modelId}]: ${prompt} prompt${cachedText} + ${completion} completion = ${total} total tokens${costText}`);
 
     if (this._usageStatusBar) {
       this._usageStatusBar.text = `$(pulse) ${total} tokens (${prompt}↑ ${completion}↓)${costText}`;
       this._usageStatusBar.tooltip =
-        `Last request: ${prompt} input + ${completion} output = ${total} total tokens${costTooltip}\nModel: ${modelId}`;
+        `Last request: ${prompt} input${cachedText} + ${completion} output = ${total} total tokens${costTooltip}\nModel: ${modelId}`;
       this._usageStatusBar.show();
     }
   }
