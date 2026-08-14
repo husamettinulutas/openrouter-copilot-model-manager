@@ -29,7 +29,7 @@ Browse, filter, and add [OpenRouter](https://openrouter.ai) models to **VS Code 
 ## 📦 Install from VSIX
 
 ```bash
-code --install-extension openrouter-copilot-model-manager-1.0.3.vsix
+code --install-extension openrouter-copilot-model-manager-1.0.4.vsix
 ```
 
 Or: VS Code → Extensions → `...` menu → **Install from VSIX...**
@@ -54,6 +54,8 @@ All settings are under `openrouterModelManager.*` in VS Code Settings:
 | `defaultTemperature` | `null` | Default temperature (0.0–2.0), empty = model default |
 | `defaultMaxTokens` | `null` | Default max output tokens, empty = model default |
 | `apiEndpoint` | `https://openrouter.ai/api/v1` | Custom API endpoint URL |
+| `enablePromptCaching` | `true` | OpenRouter automatic prompt caching (cuts agent-mode input costs) |
+| `sanitizeBase64Content` | `true` | Strip long base64 blobs from prompts (avoids guardrail 403 blocks, saves tokens) |
 | `logLevel` | `info` | Log level: debug, info, warn, error |
 
 ## 🧠 Supported Capabilities
