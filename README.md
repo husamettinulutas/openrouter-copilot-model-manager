@@ -29,11 +29,7 @@ Browse, filter, and add [OpenRouter](https://openrouter.ai) models to **VS Code 
 ## 📦 Install from VSIX
 
 ```bash
-<<<<<<< HEAD
 code --install-extension openrouter-copilot-model-manager-1.0.3.vsix
-=======
-code --install-extension openrouter-copilot-model-manager-1.0.2.vsix
->>>>>>> a6a9ad247948fce9417742b36e11f44d65fae72e
 ```
 
 Or: VS Code → Extensions → `...` menu → **Install from VSIX...**
