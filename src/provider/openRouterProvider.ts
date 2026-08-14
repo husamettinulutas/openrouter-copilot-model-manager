@@ -785,9 +785,13 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
   /** Build a user-friendly error message from an OpenRouter API error response. */
   private buildFriendlyError(statusCode: number | undefined, body: string): string {
     let message = body;
+    let guardrailPatterns: string[] = [];
     try {
       const parsed = JSON.parse(body);
       message = parsed?.error?.message || body;
+      if (Array.isArray(parsed?.error?.metadata?.patterns)) {
+        guardrailPatterns = parsed.error.metadata.patterns;
+      }
     } catch {
       // keep raw body
     }
@@ -804,6 +808,20 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
         '❌ OpenRouter: No endpoints available for this model due to your account privacy/data policy settings.\n\n' +
         'This is an OpenRouter account setting, not an extension error. Many free models require enabling prompt logging/training.\n\n' +
         '➡️ Fix: open https://openrouter.ai/settings/privacy and enable the required data policy options, then try again.'
+      );
+    }
+
+    if (
+      statusCode === 403 &&
+      (lower.includes('prompt injection') || lower.includes('request blocked'))
+    ) {
+      const patternsText =
+        guardrailPatterns.length > 0 ? ` Detected patterns: ${guardrailPatterns.join(', ')}.` : '';
+      return (
+        '❌ OpenRouter: Request blocked by security guardrails (not an API key problem).\n\n' +
+        `Your organization's OpenRouter guardrails flagged the prompt content as a potential injection.${patternsText} ` +
+        'This is usually a false positive triggered by long base64-like blobs in the context (images, data URIs, encoded strings in files).\n\n' +
+        '➡️ Fix: remove base64-heavy files/images from the chat context, or ask your OpenRouter organization admin to relax the guardrail settings.'
       );
     }
 
