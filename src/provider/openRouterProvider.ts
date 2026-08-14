@@ -34,6 +34,8 @@ class OpenRouterRequestError extends Error {
     public readonly statusCode?: number,
     public readonly retryAfter?: number,
     public readonly errorCode?: string,
+    /** True when the request was blocked by OpenRouter's prompt-injection guardrails. */
+    public readonly isGuardrailBlock?: boolean,
   ) {
     super(message);
     this.name = 'OpenRouterRequestError';
@@ -137,7 +139,17 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
     }
 
     // Format messages (with system role support)
-    const formattedMessages = this.formatMessages(messages);
+    let formattedMessages = this.formatMessages(messages);
+
+    // Proactively strip long base64 blobs so organization guardrails don't
+    // block the request as base64_encoded_injection (and to save tokens).
+    if (getConfig<boolean>('sanitizeBase64Content', true)) {
+      const { messages: sanitized, removedChars } = this.sanitizeMessagesBase64(formattedMessages);
+      if (removedChars > 0) {
+        Logger.info(`Sanitized ${removedChars} chars of base64-like content from outgoing prompt`);
+        formattedMessages = sanitized;
+      }
+    }
 
     // Build tool definitions
     const { tools, toolChoice } = this.buildToolDefinitions(_options);
@@ -158,6 +170,31 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
     } catch (err: any) {
       // Cancellation is not an error
       if (token.isCancellationRequested) { return; }
+
+      // Guardrail 403 (prompt injection detection): retry once with base64
+      // blobs stripped — but only if stripping actually changes the payload
+      // (it won't if the proactive sanitizer already ran), so this can't loop.
+      if (err instanceof OpenRouterRequestError && err.isGuardrailBlock) {
+        const { messages: cleaned, removedChars } = this.sanitizeMessagesBase64(formattedMessages);
+        if (removedChars > 0) {
+          Logger.warn(
+            `Guardrail blocked request; retrying once with ${removedChars} chars of base64 content removed`,
+          );
+          progress.report(
+            new vscode.LanguageModelTextPart(
+              '\n🛡️ Request blocked by OpenRouter guardrails — retrying once with base64 content removed...\n',
+            ),
+          );
+          const retryBody = this.buildRequestBody(model.id, cleaned, tools, toolChoice);
+          try {
+            await this.makeRequestWithRetry(retryBody, apiKey, progress, token, 0, timeoutSeconds);
+            return;
+          } catch (retryErr: any) {
+            if (token.isCancellationRequested) { return; }
+            err = retryErr;
+          }
+        }
+      }
 
       // OpenRouterRequestError messages were already reported to progress in makeStreamingRequest.
       // For unexpected errors, report them now.
@@ -199,6 +236,81 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
   /** Check if a content part is a LanguageModelToolResultPart. */
   private isToolResultPart(part: any): part is vscode.LanguageModelToolResultPart {
     return part && typeof part === 'object' && 'callId' in part && 'content' in part && !('name' in part);
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Base64 sanitization
+  // ────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Long runs of base64-alphabet characters (incl. base64url) in prompt text.
+   * OpenRouter organization guardrails flag these as "base64_encoded_injection"
+   * and block the whole request with a 403; they also burn tokens for content
+   * models rarely need verbatim. 200+ chars won't match normal prose or code —
+   * identifiers and minified JS are broken up by punctuation outside this set.
+   */
+  private static readonly BASE64_RUN_REGEX = /[A-Za-z0-9+\/=_-]{200,}/g;
+
+  /** Replace long base64-like runs in text with a short placeholder. */
+  private sanitizeBase64Text(text: string): { text: string; removed: number } {
+    let removed = 0;
+    const sanitized = text.replace(OpenRouterChatProvider.BASE64_RUN_REGEX, (match) => {
+      removed += match.length;
+      return `[base64 content removed: ${match.length} chars]`;
+    });
+    return { text: sanitized, removed };
+  }
+
+  /**
+   * Strip long base64-like blobs from formatted message text.
+   * image_url parts (vision attachments) are never touched — they must stay
+   * base64 data URLs for the API. Returns new message objects; originals are
+   * not mutated.
+   */
+  private sanitizeMessagesBase64(messages: any[]): { messages: any[]; removedChars: number } {
+    let removedChars = 0;
+
+    const result = messages.map((msg) => {
+      if (typeof msg.content === 'string') {
+        const { text, removed } = this.sanitizeBase64Text(msg.content);
+        if (removed === 0) { return msg; }
+        removedChars += removed;
+        return { ...msg, content: text };
+      }
+
+      if (Array.isArray(msg.content)) {
+        let changed = false;
+        const parts = msg.content.map((part: any) => {
+          if (part?.type === 'text' && typeof part.text === 'string') {
+            const { text, removed } = this.sanitizeBase64Text(part.text);
+            if (removed > 0) {
+              changed = true;
+              removedChars += removed;
+              return { ...part, text };
+            }
+          }
+          return part;
+        });
+        return changed ? { ...msg, content: parts } : msg;
+      }
+
+      return msg;
+    });
+
+    return { messages: result, removedChars };
+  }
+
+  /** True when a non-200 response is an OpenRouter guardrail block rather than an auth failure. */
+  private isGuardrailBlockError(statusCode: number | undefined, body: string): boolean {
+    if (statusCode !== 403) { return false; }
+    let message = body;
+    try {
+      message = JSON.parse(body)?.error?.message || body;
+    } catch {
+      // keep raw body
+    }
+    const lower = message.toLowerCase();
+    return lower.includes('prompt injection') || lower.includes('request blocked');
   }
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -559,7 +671,15 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
                 if (header) { retryAfter = parseInt(header as string, 10) || 5; }
               }
 
-              reject(new OpenRouterRequestError(friendly, res.statusCode, retryAfter));
+              reject(
+                new OpenRouterRequestError(
+                  friendly,
+                  res.statusCode,
+                  retryAfter,
+                  undefined,
+                  this.isGuardrailBlockError(res.statusCode, errBody),
+                ),
+              );
             });
             return;
           }
@@ -811,10 +931,7 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
       );
     }
 
-    if (
-      statusCode === 403 &&
-      (lower.includes('prompt injection') || lower.includes('request blocked'))
-    ) {
+    if (this.isGuardrailBlockError(statusCode, body)) {
       const patternsText =
         guardrailPatterns.length > 0 ? ` Detected patterns: ${guardrailPatterns.join(', ')}.` : '';
       return (
