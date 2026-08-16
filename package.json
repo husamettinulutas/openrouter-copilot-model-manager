@@ -2,7 +2,7 @@
   "name": "openrouter-copilot-model-manager",
   "displayName": "OpenRouter Copilot Model Manager",
   "description": "Browse, filter, and add OpenRouter models to VS Code Copilot Chat with a rich visual interface. Supports pricing display, capability filtering (text/vision/tools), and one-click Copilot integration.",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "publisher": "husamettinulutas",
   "author": {
     "name": "Hüsamettin Ulutaş",
@@ -145,6 +145,12 @@
           "type": "boolean",
           "default": true,
           "description": "Include stream_options.include_usage in requests to receive token usage statistics. Disable this if you encounter 'invalid_json' errors — some backend providers (Azure, certain OpenAI endpoints) reject this field."
+        },
+        "openrouterModelManager.maxInputTokensOverride": {
+          "type": ["number", "null"],
+          "default": null,
+          "description": "Override the maxInputTokens reported to VS Code for all models. Lower values trigger conversation compaction (summarization of older messages) earlier, preventing oversized request bodies. Leave empty to auto-calculate from each model's context window. Recommended: 200000 for most use cases.",
+          "minimum": 4096
         },
         "openrouterModelManager.sanitizeBase64Content": {
           "type": "boolean",
