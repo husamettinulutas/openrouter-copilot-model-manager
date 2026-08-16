@@ -392,7 +392,7 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
               type: 'function',
               function: {
                 name: part.name,
-                arguments: typeof part.input === 'string' ? part.input : JSON.stringify(part.input),
+                arguments: this.safeSerializeToolArguments(part.input),
               },
             });
           } else {
@@ -512,9 +512,14 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
       model: modelId,
       messages,
       stream: true,
-      // Request usage statistics in the streaming response
-      stream_options: { include_usage: true },
     };
+
+    // stream_options: some backend providers (Azure, certain OpenAI endpoints)
+    // reject this field with an invalid_json or unrecognized-field error.
+    // Default on for OpenRouter-native usage; can be disabled via setting.
+    if (getConfig<boolean>('enableStreamUsage', true)) {
+      body.stream_options = { include_usage: true };
+    }
 
     // Enable OpenRouter automatic prompt caching. Anthropic models only cache
     // when cache_control is present (otherwise every agent-mode turn re-bills
@@ -622,7 +627,22 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
     token: vscode.CancellationToken,
     timeoutSeconds: number,
   ): Promise<void> {
-    const bodyData = JSON.stringify(requestBody);
+    // Validate JSON serialization before sending — catch circular refs, undefined, etc.
+    let bodyData: string;
+    try {
+      bodyData = JSON.stringify(requestBody);
+    } catch (serializeErr: any) {
+      Logger.error('Failed to serialize request body to JSON', serializeErr);
+      throw new OpenRouterRequestError(
+        `❌ Internal error: request body could not be serialized to JSON — ${serializeErr.message}`,
+      );
+    }
+
+    // Log outgoing payload size and model for debugging (body itself may be huge)
+    Logger.info(`Outgoing request: ${bodyData.length} bytes, model=${requestBody.model}`);
+    // Log full body at debug level (truncated for safety)
+    Logger.info(`Request body preview: ${bodyData.slice(0, 500)}${bodyData.length > 500 ? '...[truncated]' : ''}`);
+
     const apiEndpoint = getConfig<string>('apiEndpoint', 'https://openrouter.ai/api/v1');
 
     let url: URL;
@@ -854,6 +874,36 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
       }
     }
     pendingToolCalls.clear();
+  }
+
+  /**
+   * Safely serialize tool call arguments to a JSON string.
+   * VS Code may pass input as a parsed object, a valid JSON string, or
+   * occasionally a malformed string. This method guarantees the returned
+   * value is always a valid JSON string so the outer request body stays
+   * parseable by the API.
+   */
+  private safeSerializeToolArguments(input: any): string {
+    // Case 1: input is not a string — serialize the object directly
+    if (typeof input !== 'string') {
+      try {
+        return JSON.stringify(input ?? {});
+      } catch {
+        Logger.warn('Tool call input could not be serialized, using empty object');
+        return '{}';
+      }
+    }
+
+    // Case 2: input is a string — verify it is valid JSON
+    try {
+      JSON.parse(input);
+      return input; // Already valid JSON string
+    } catch {
+      // Not valid JSON — wrap the raw string as a JSON-encoded string value
+      // so the arguments field is still valid JSON (e.g. '{"_raw":"..."}')
+      Logger.warn(`Tool call arguments string is not valid JSON, wrapping as _raw: ${input.slice(0, 100)}`);
+      return JSON.stringify({ _raw: input });
+    }
   }
 
   // ────────────────────────────────────────────────────────────────────────────
