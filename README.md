@@ -11,6 +11,7 @@ Browse, filter, and add [OpenRouter](https://openrouter.ai) models to **VS Code 
 - 🚀 **Native Copilot Integration** — Models register directly as a VS Code `LanguageModelChatProvider` — no external config files needed
 - 🔧 **Full Agentic Mode** — Tool calling, terminal access, file operations, and web search through Copilot Chat
 - 💭 **Thinking/Reasoning Display** — See model reasoning (Claude, DeepSeek-R1, Qwen3, etc.)
+- 🎚️ **Thinking Effort Control** — Pick the reasoning depth per request straight from the Copilot model-picker's **Thinking Effort** submenu, or set a per-model default in the browser panel
 - 🔄 **Auto Retry with Backoff** — Graceful handling of rate limits (429) and server errors
 - ⏱️ **Configurable Timeout** — Prevent hanging requests with customizable timeouts
 - 📈 **Usage Stats** — Token usage displayed in the status bar after each request
@@ -56,6 +57,7 @@ All settings are under `openrouterModelManager.*` in VS Code Settings:
 | `apiEndpoint` | `https://openrouter.ai/api/v1` | Custom API endpoint URL |
 | `enablePromptCaching` | `true` | OpenRouter automatic prompt caching (cuts agent-mode input costs) |
 | `sanitizeBase64Content` | `true` | Strip long base64 blobs from prompts (avoids guardrail 403 blocks, saves tokens) |
+| `defaultReasoningEffort` | `null` | Default thinking effort for reasoning models (`none`/`minimal`/`low`/`medium`/`high`/`xhigh`/`max`); empty = each model's catalog default |
 | `logLevel` | `info` | Log level: debug, info, warn, error |
 
 ## 🧠 Supported Capabilities
@@ -66,10 +68,15 @@ All settings are under `openrouterModelManager.*` in VS Code Settings:
 | Tool Calling (Function Call) | ✅ |
 | Vision / Image Input | ✅ |
 | Thinking/Reasoning | ✅ |
+| Thinking Effort picker | ✅ |
 | System Messages | ✅ |
 | Streaming | ✅ |
 | Retry with Backoff | ✅ |
 | Usage Statistics | ✅ |
+
+## 🙏 Credits
+
+The Copilot model-picker **Thinking Effort** integration was adapted from [@Irvingouj](https://github.com/Irvingouj)'s fork ([`c2dc1de`](https://github.com/Irvingouj/openrouter-copilot-model-manager/commit/c2dc1de61a44ee6504f9c3d2de21b81f3cc1cbc6)), with the model-id heuristic removed and without enabling proposed APIs, so this build stays installable from the Marketplace on stable VS Code.
 
 ## 📄 License
 

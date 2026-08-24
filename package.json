@@ -2,7 +2,7 @@
   "name": "openrouter-copilot-model-manager",
   "displayName": "OpenRouter Copilot Model Manager",
   "description": "Browse, filter, and add OpenRouter models to VS Code Copilot Chat with a rich visual interface. Supports pricing display, capability filtering (text/vision/tools), and one-click Copilot integration.",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "license": "MIT",
   "publisher": "husamettinulutas",
   "author": {
@@ -19,7 +19,7 @@
   },
   "icon": "resources/icon.png",
   "engines": {
-    "vscode": "^1.95.0"
+    "vscode": "^1.104.0"
   },
   "categories": [
     "AI",
@@ -153,6 +153,24 @@
           "description": "Override the maxInputTokens reported to VS Code for all models. Lower values trigger conversation compaction (summarization of older messages) earlier, preventing oversized request bodies. Leave empty to auto-calculate from each model's context window. Recommended: 200000 for most use cases.",
           "minimum": 4096
         },
+        "openrouterModelManager.defaultReasoningEffort": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            null,
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "description": "Default thinking effort for reasoning models when Copilot has not set one yet. Leave empty to use each model's catalog default. The Copilot model-picker Thinking Effort submenu overrides this per session."
+        },
         "openrouterModelManager.sanitizeBase64Content": {
           "type": "boolean",
           "default": true,
@@ -182,7 +200,8 @@
     "vscode:prepublish": "npm run build",
     "build": "node esbuild.js --production",
     "watch": "node esbuild.js --watch",
-    "package": "npx @vscode/vsce package --no-dependencies"
+    "package": "npx @vscode/vsce package --no-dependencies",
+    "test": "npx --yes tsx --test src/__tests__/apiKeyUtils.test.ts src/__tests__/tokenEstimation.test.ts src/__tests__/reasoningEffort.test.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

@@ -3,8 +3,12 @@ import * as https from 'https';
 import { ModelCache } from '../cache/modelCache';
 import { SecretsManager } from '../utils/secrets';
 import { Logger } from '../utils/logger';
-import { SelectedModel } from '../types/models';
+import { ProcessedModel, SelectedModel } from '../types/models';
 import { normalizeApiKey } from '../utils/apiKeyUtils';
+import {
+  buildThinkingEffortSchema,
+  resolveReasoningEffort,
+} from '../utils/reasoningEffort';
 
 // ─── Configuration helper ────────────────────────────────────────────────────
 
@@ -96,8 +100,11 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
       selected.some((s) => s.id === m.id && s.enabled),
     );
 
+    const globalDefault = getConfig<string | null>('defaultReasoningEffort', null);
     return activeModels.map((m) => {
       const maxOutput = m.maxOutputTokens || 4096;
+      const selectedEntry = selected.find((s) => s.id === m.id);
+      const effortDefault = selectedEntry?.reasoningEffort || globalDefault || undefined;
       return {
         id: m.id,
         name: m.name,
@@ -105,10 +112,23 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
         version: '1.0.0',
         maxInputTokens: this.calculateMaxInputTokens(m.contextLength, maxOutput),
         maxOutputTokens: maxOutput,
+        tooltip: this.buildModelTooltip(m),
+        detail: m.reasoning
+          ? `Thinking · ${effortDefault || m.reasoning.defaultEffort || 'default'}`
+          : undefined,
         capabilities: {
           imageInput: m.capabilities.vision,
           toolCalling: m.capabilities.toolCalling,
         },
+        isUserSelectable: true,
+        isBYOK: true,
+        // Renders the "Thinking Effort" submenu in the Copilot model picker.
+        // Ungated by VS Code, so no enabledApiProposals entry is needed.
+        ...(m.reasoning
+          ? {
+              configurationSchema: buildThinkingEffortSchema(m.reasoning, effortDefault),
+            }
+          : {}),
       };
     });
   }
@@ -157,8 +177,21 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
     // Build tool definitions
     const { tools, toolChoice } = this.buildToolDefinitions(_options);
 
+    // Resolve thinking effort: Copilot picker → per-model override → global setting → catalog default
+    const selectedModels = this.globalState.get<SelectedModel[]>('openrouter-selected-models') || [];
+    const cachedModel = this.cache.getModel(model.id);
+    const globalDefaultEffort = getConfig<string | null>('defaultReasoningEffort', null);
+    const reasoningEffort = resolveReasoningEffort(
+      cachedModel?.reasoning,
+      {
+        modelConfiguration: _options.modelConfiguration,
+        modelOptions: _options.modelOptions,
+      },
+      selectedModels.find((s) => s.id === model.id)?.reasoningEffort || globalDefaultEffort || undefined,
+    );
+
     // Build request body (with model parameters from settings)
-    const requestBody = this.buildRequestBody(model.id, formattedMessages, tools, toolChoice);
+    const requestBody = this.buildRequestBody(model.id, formattedMessages, tools, toolChoice, reasoningEffort);
 
     // Read retry & timeout settings
     const maxRetries = getConfig<number>('maxRetries', 3);
@@ -177,7 +210,7 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
     } catch { /* estimation failed, continue anyway */ }
 
     Logger.info(
-      `Sending request to OpenRouter: model=${model.id}, messages=${formattedMessages.length}, tools=${tools?.length || 0}`,
+      `Sending request to OpenRouter: model=${model.id}, messages=${formattedMessages.length}, tools=${tools?.length || 0}, effort=${reasoningEffort ?? 'default'}`,
     );
 
     try {
@@ -200,7 +233,7 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
               '\n🛡️ Request blocked by OpenRouter guardrails — retrying once with base64 content removed...\n',
             ),
           );
-          const retryBody = this.buildRequestBody(model.id, cleaned, tools, toolChoice);
+          const retryBody = this.buildRequestBody(model.id, cleaned, tools, toolChoice, reasoningEffort);
           try {
             await this.makeRequestWithRetry(retryBody, apiKey, progress, token, 0, timeoutSeconds);
             return;
@@ -522,12 +555,17 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
     messages: any[],
     tools: any[] | undefined,
     toolChoice: string | undefined,
+    reasoningEffort?: string,
   ): any {
     const body: any = {
       model: modelId,
       messages,
       stream: true,
     };
+
+    if (reasoningEffort) {
+      body.reasoning = { effort: reasoningEffort };
+    }
 
     // stream_options: some backend providers (Azure, certain OpenAI endpoints)
     // reject this field with an invalid_json or unrecognized-field error.
@@ -1028,6 +1066,17 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
   // ────────────────────────────────────────────────────────────────────────────
   // Context window calculation
   // ────────────────────────────────────────────────────────────────────────────
+
+  /** Model-picker hover text: id plus the capabilities this model actually has. */
+  private buildModelTooltip(m: ProcessedModel): string {
+    const caps: string[] = [];
+    if (m.capabilities.toolCalling) { caps.push('tools'); }
+    if (m.capabilities.vision) { caps.push('vision'); }
+    if (m.reasoning) {
+      caps.push(`thinking (${m.reasoning.supportedEfforts.join('/')})`);
+    }
+    return `${m.name} (${m.id})${caps.length ? ' — ' + caps.join(', ') : ''}`;
+  }
 
   /**
    * Calculate the effective maxInputTokens to report to VS Code.

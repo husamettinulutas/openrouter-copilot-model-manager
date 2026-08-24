@@ -30,6 +30,7 @@
     filterVision:     $('#filter-vision'),
     filterTools:      $('#filter-tools'),
     filterFree:       $('#filter-free'),
+    filterReasoning:  $('#filter-reasoning'),
     sortSelect:       $('#sort-select'),
     providerBtn:      $('#provider-filter-btn'),
     providerMenu:     $('#provider-menu'),
@@ -97,6 +98,13 @@
       dom.filterFree.classList.toggle('active');
       renderModels();
     });
+    if (dom.filterReasoning) {
+      dom.filterReasoning.addEventListener('click', () => {
+        Filters.toggle('reasoning');
+        dom.filterReasoning.classList.toggle('active');
+        renderModels();
+      });
+    }
 
     // Sort
     dom.sortSelect.addEventListener('change', () => {
@@ -387,10 +395,11 @@
               <span class="active-model-name">${escapeHtml(am.name)}</span>
               <span class="active-model-id">${escapeHtml(am.id)}</span>
             </div>
-            <button class="btn btn-danger btn-sm" onclick="removeActiveModel('${am.id}')">
+            <button class="btn btn-danger btn-sm" onclick="removeActiveModel('${escapeHtml(am.id)}')">
               Remove from Copilot
             </button>
           </div>
+          ${renderEffortControl(am)}
 
           ${badges.length > 0 ? `<div class="model-card-badges" style="margin-top: var(--space-2); margin-bottom: var(--space-2);">${badges.join('')}</div>` : ''}
 
@@ -421,6 +430,27 @@
         </div>
       `;
     }).join('');
+  }
+
+  function renderEffortControl(am) {
+    const efforts = am.supportedEfforts || [];
+    if (!efforts.length) {
+      return '';
+    }
+    const current = am.reasoningEffort || efforts[0];
+    const options = efforts.map((effort) => {
+      const selected = effort === current ? ' selected' : '';
+      const label = effort.charAt(0).toUpperCase() + effort.slice(1);
+      return `<option value="${escapeHtml(effort)}"${selected}>${escapeHtml(label)}</option>`;
+    }).join('');
+    return `
+      <div class="effort-row">
+        <label class="effort-label">Thinking effort</label>
+        <select class="effort-select" data-model-id="${escapeHtml(am.id)}" onchange="setReasoningEffort(this)">
+          ${options}
+        </select>
+      </div>
+    `;
   }
 
   function renderEmptyState() {
@@ -562,6 +592,13 @@
     vscodeApi.postMessage({ type: 'removeActiveModel', modelId });
   };
 
+  window.setReasoningEffort = function(selectEl) {
+    const modelId = selectEl.dataset.modelId;
+    const effort = selectEl.value;
+    if (!modelId || !effort) return;
+    vscodeApi.postMessage({ type: 'setReasoningEffort', modelId, effort });
+  };
+
   window.resetFilters = function() {
     Filters.reset();
     dom.searchInput.value = '';
@@ -569,6 +606,9 @@
     dom.filterVision.classList.remove('active');
     dom.filterTools.classList.remove('active');
     dom.filterFree.classList.remove('active');
+    if (dom.filterReasoning) {
+      dom.filterReasoning.classList.remove('active');
+    }
     dom.sortSelect.value = 'name-asc';
     dom.providerBtn.textContent = '🏢 Provider';
     renderModels();

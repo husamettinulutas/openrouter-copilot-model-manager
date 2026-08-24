@@ -27,6 +27,13 @@ export interface OpenRouterModel {
     is_moderated?: boolean;
   };
   supported_parameters?: string[];
+  reasoning?: {
+    supported_efforts?: string[] | null;
+    default_effort?: string | null;
+    default_enabled?: boolean;
+    mandatory?: boolean;
+    supports_max_tokens?: boolean;
+  };
   per_request_limits?: {
     prompt_tokens?: string;
     completion_tokens?: string;
@@ -59,6 +66,14 @@ export interface ProcessedModel {
     imageOutput: boolean;
     reasoning: boolean;
   };
+  /** Effort-selection metadata; present only for models that declare reasoning. */
+  reasoning?: {
+    supportedEfforts: string[];
+    defaultEffort?: string;
+    defaultEnabled: boolean;
+    mandatory: boolean;
+    supportsMaxTokens: boolean;
+  };
   supportedParameters: string[];
   isFree: boolean;
   createdAt?: number;
@@ -70,6 +85,8 @@ export interface SelectedModel {
   name: string;
   addedAt: number;       // Timestamp when added
   enabled: boolean;      // Whether visible in Copilot
+  /** Per-model thinking effort override (OpenRouter reasoning.effort). */
+  reasoningEffort?: string;
 }
 
 /** Active model entry managed by this extension */
@@ -81,6 +98,9 @@ export interface ActiveCopilotModel {
   vision: boolean;
   maxInputTokens: number;
   maxOutputTokens?: number;
+  reasoningEffort?: string;
+  supportedEfforts?: string[];
+  reasoningMandatory?: boolean;
 }
 
 
@@ -100,6 +120,7 @@ export type WebviewMessage =
   | { type: 'removeActiveModel'; modelId: string }
   | { type: 'clearDraftModels' }
   | { type: 'toggleModel'; modelId: string; enabled: boolean }
+  | { type: 'setReasoningEffort'; modelId: string; effort: string }
   | { type: 'applyToCopilot' }
   | { type: 'setApiKey' }
   | { type: 'syncModels' }
