@@ -3,6 +3,7 @@
   "displayName": "OpenRouter Copilot Model Manager",
   "description": "Browse, filter, and add OpenRouter models to VS Code Copilot Chat with a rich visual interface. Supports pricing display, capability filtering (text/vision/tools), and one-click Copilot integration.",
   "version": "1.0.6",
+  "license": "MIT",
   "publisher": "husamettinulutas",
   "author": {
     "name": "Hüsamettin Ulutaş",
