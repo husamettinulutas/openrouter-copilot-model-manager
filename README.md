@@ -28,7 +28,8 @@
 - **Compare at a glance.** Every model shows its capabilities, input and output price per million tokens, context window and max output, with small meters so you can compare while scanning. In an editor tab the list becomes a sortable table.
 - **Add to Copilot in one click.** Select models, then press **Apply to Copilot**. They appear in the Copilot Chat model picker under **OpenRouter**, with no reload and no config file.
 - **Manage what is live.** The **Active** tab lists every model in Copilot. Remove one, or set its default **Thinking effort**.
-- **Full agent mode in Copilot Chat.** Tool calling, vision input, streamed reasoning, prompt caching, retries with backoff and token usage in the status bar.
+- **Full agent mode in Copilot Chat.** Tool calling, vision input, streamed reasoning, prompt caching, retries with backoff, and token usage and cost in the status bar.
+- **See which model answered.** With a router such as `openrouter/auto`, the status bar names the model that actually answered and its provider.
 - **Fits anywhere.** The panel follows your VS Code theme (light, dark or high contrast) and works from a narrow sidebar up to a full editor tab.
 
 ## Install
@@ -36,7 +37,7 @@
 Search **OpenRouter Copilot Model Manager** in the VS Code Extensions view, or install a `.vsix`:
 
 ```bash
-code --install-extension openrouter-copilot-model-manager-1.2.0.vsix
+code --install-extension openrouter-copilot-model-manager-1.2.1.vsix
 ```
 
 Requires VS Code **1.104+** and GitHub Copilot Chat.

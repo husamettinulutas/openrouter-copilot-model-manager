@@ -3,6 +3,13 @@
 All notable changes to **OpenRouter Copilot Model Manager** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.1]
+
+- **See which model answered.** When you use a router such as `openrouter/auto`, the status bar now names the model that actually answered, for example `· claude-4-sonnet-20250522`. Its tooltip lists the requested model, the model that answered and the upstream provider, and the **OpenRouter** output channel logs them for every request.
+- **The cost in the status bar is what OpenRouter billed.** When OpenRouter reports the request's cost, the status bar shows that figure. Otherwise it prices the tokens with the model that answered, not with the router.
+- **Routers show "Varies" instead of a broken price.** OpenRouter lists routers with a price of `-1`, which the panel showed as a large negative number and counted in price sorting. Their price now reads **Varies**, and they sort last by price.
+- **Tool results reach the model intact.** Text, JSON and structured (prompt-tsx) output that Copilot tools return is sent to the model as text; before, structured output could arrive as `[object Object]`. Images a tool returns are now forwarded to models that accept images, and models that do not are told the images were left out.
+
 ## [1.2.0]
 
 **A redesigned Model Browser.** The panel was rebuilt from scratch. Every feature and the extension's message protocol stay the same; only the webview and the icons changed.

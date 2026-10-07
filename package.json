@@ -2,7 +2,7 @@
   "name": "openrouter-copilot-model-manager",
   "displayName": "OpenRouter Copilot Model Manager",
   "description": "Browse, filter, and add OpenRouter models to VS Code Copilot Chat with a rich visual interface. Supports pricing display, capability filtering (text/vision/tools), and one-click Copilot integration.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "license": "MIT",
   "publisher": "husamettinulutas",
   "author": {
@@ -192,7 +192,7 @@
     "build": "node esbuild.js --production",
     "watch": "node esbuild.js --watch",
     "package": "npx @vscode/vsce package --no-dependencies",
-    "test": "npx --yes tsx --test src/__tests__/apiKeyUtils.test.ts src/__tests__/tokenEstimation.test.ts src/__tests__/reasoningEffort.test.ts"
+    "test": "npx --yes tsx --test src/__tests__/apiKeyUtils.test.ts src/__tests__/tokenEstimation.test.ts src/__tests__/reasoningEffort.test.ts src/__tests__/toolResultContent.test.ts src/__tests__/servedModel.test.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
