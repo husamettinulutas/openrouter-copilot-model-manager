@@ -776,6 +776,13 @@
     if (focusKey) restoreFocus(dom.activeModelsList, focusKey);
   }
 
+  // Weakest to strongest; same set as src/utils/reasoningEffort.ts
+  const EFFORT_ORDER = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
+  function effortRank(effort) {
+    const i = EFFORT_ORDER.indexOf(effort);
+    return i === -1 ? EFFORT_ORDER.length : i;
+  }
+
   function renderEffortControl(am) {
     const efforts = am.supportedEfforts || [];
     if (!efforts.length) {
@@ -786,14 +793,17 @@
       </div>`;
     }
     const current = am.reasoningEffort || efforts[0];
-    const idx = Math.max(0, efforts.indexOf(current));
+    // Rank by effort strength, not list position: the catalog lists efforts in either order
+    const levels = efforts.filter(e => e !== 'none')
+      .sort((a, b) => effortRank(a) - effortRank(b));
+    const idx = Math.max(0, levels.indexOf(current));
     const options = efforts.map((effort) => {
       const selected = effort === current ? ' selected' : '';
       const label = effort.charAt(0).toUpperCase() + effort.slice(1);
       return `<option value="${escapeAttr(effort)}"${selected}>${escapeHtml(label)}</option>`;
     }).join('');
     // Compact 4-bar gauge: the level mapped onto 4 steps ("none" = 0 bars)
-    const lit = current === 'none' ? 0 : Math.max(1, Math.ceil(((idx + 1) / efforts.length) * 4));
+    const lit = current === 'none' ? 0 : Math.max(1, Math.ceil(((idx + 1) / levels.length) * 4));
     let bars = '';
     for (let i = 0; i < 4; i++) bars += `<i class="${i < lit ? 'on' : ''}"></i>`;
     const selId = 'eff-' + hashId(am.id);
@@ -803,7 +813,7 @@
     return `
       <div class="effort">
         <label class="effort-label" for="${selId}">${icon('bulb', 13)}<span class="effort-text"><span class="effort-name">Thinking effort</span>${always}</span></label>
-        <span class="effort-gauge" role="img" aria-label="Effort level ${idx + 1} of ${efforts.length}">${bars}</span>
+        <span class="effort-gauge" role="img" aria-label="${current === 'none' ? 'Effort off' : `Effort level ${idx + 1} of ${levels.length}`}">${bars}</span>
         <span class="effort-select-wrap">
           <select class="effort-select" id="${selId}" data-model-id="${escapeAttr(am.id)}" data-fk="eff:${escapeAttr(am.id)}">
             ${options}
