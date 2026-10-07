@@ -548,7 +548,7 @@
           ${hasDetails ? `<button class="details-btn" data-action="details" data-model-id="${id}" data-fk="det:${id}" aria-expanded="${isOpen}" aria-label="Details for ${name}" title="Details"><span class="details-label">Details</span>${icon('chevronDown', 12)}</button>` : ''}
         </div>
 
-        ${metricStrip(model.isFree, model.pricing.promptPerMillion, model.pricing.completionPerMillion, model.contextLength, model.maxOutputTokens)}
+        ${metricStrip(model.isFree, model.pricing.promptPerMillion, model.pricing.completionPerMillion, model.contextLength, model.maxOutputTokens, hasVariablePrice(model))}
 
         ${hasDetails ? `
           <div class="desc${isOpen ? ' open' : ''}">
@@ -605,8 +605,15 @@
     return out.join('');
   }
 
-  function metricStrip(isFree, inP, outP, ctx, maxOut) {
-    const price = isFree
+  /** Routers (openrouter/auto, …) bill the price of the model they pick; older caches hold them as negative prices. */
+  function hasVariablePrice(model) {
+    return !!model && (!!model.variablePricing || model.pricing.promptPerMillion < 0 || model.pricing.completionPerMillion < 0);
+  }
+
+  function metricStrip(isFree, inP, outP, ctx, maxOut, variable) {
+    const price = variable
+      ? `<div class="metric span-2 m-free" title="Routes each request to a model and bills that model's price"><span class="m-cap">Price $/M</span><span class="m-val varies" aria-label="Price varies by the model it routes to">${icon('zap', 13)}Varies</span></div>`
+      : isFree
       ? `<div class="metric span-2 m-free"><span class="m-cap">Price $/M</span><span class="m-val free" aria-label="Free">${icon('gift', 13)}Free</span></div>`
       : `<div class="metric m-in" aria-label="Input ${fmtPrice(inP)} per million tokens"><span class="m-cap">In $/M</span><span class="m-val">${fmtPrice(inP)}</span>${costDots(inP, 'in')}</div>
          <div class="metric m-out" aria-label="Output ${fmtPrice(outP)} per million tokens"><span class="m-cap">Out $/M</span><span class="m-val">${fmtPrice(outP)}</span>${costDots(outP, 'out')}</div>`;
@@ -750,7 +757,7 @@
       const enter = animate && i < 12 ? ` enter" style="--i:${i}` : '';
       const flash = highlightIds.has(am.id) ? ' just-added' : '';
       const metrics = fullModel
-        ? metricStrip(fullModel.isFree, fullModel.pricing.promptPerMillion, fullModel.pricing.completionPerMillion, ctx, maxOut)
+        ? metricStrip(fullModel.isFree, fullModel.pricing.promptPerMillion, fullModel.pricing.completionPerMillion, ctx, maxOut, hasVariablePrice(fullModel))
         : metricStrip(false, NaN, NaN, ctx, maxOut);
 
       return `
@@ -846,7 +853,7 @@
     dom.selectedList.innerHTML = draftModels.map(sm => {
       const model = allModels.find(m => m.id === sm.id);
       const price = model
-        ? (model.isFree ? 'Free' : `${fmtPrice(model.pricing.promptPerMillion)} / ${fmtPrice(model.pricing.completionPerMillion)}`)
+        ? (hasVariablePrice(model) ? 'Varies' : model.isFree ? 'Free' : `${fmtPrice(model.pricing.promptPerMillion)} / ${fmtPrice(model.pricing.completionPerMillion)}`)
         : '';
       const provider = model ? model.provider : (sm.id.split('/')[0] || '');
       return `

@@ -271,6 +271,7 @@ body.vscode-light .metrics { background: color-mix(in oklab, var(--fg) 2.5%, tra
 }
 .m-val .u { font-size: var(--fs-xs); font-weight: 500; color: var(--fg-3); margin-left: 1px; }
 .m-val.free { color: var(--c-free); display: inline-flex; align-items: center; gap: 5px; }
+.m-val.varies { color: var(--brand-text); display: inline-flex; align-items: center; gap: 5px; }
 .m-val.with-ring { display: inline-flex; align-items: center; gap: 5px; }
 
 /* Context ring gauge */
