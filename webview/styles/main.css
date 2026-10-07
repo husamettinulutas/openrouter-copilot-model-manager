@@ -64,24 +64,45 @@ select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 body.vscode-high-contrast .aurora, body.vscode-high-contrast-light .aurora { display: none; }
 
 /* ---------------- Top bar ---------------- */
+/* Sidebar: brand + actions on the first row, a brand hairline, then full-width tabs */
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "brand tools" "rule rule" "tabs tabs";
   align-items: center;
-  gap: var(--s4);
+  column-gap: var(--s2);
   padding: 10px var(--gutter) 8px;
   flex: none;
 }
-.brand { display: none; align-items: center; gap: 10px; min-width: 0; }
+.topbar > .brand { grid-area: brand; }
+.topbar > .toolbar { grid-area: tools; }
+.topbar > .segmented { grid-area: tabs; }
+.topbar-rule {
+  grid-area: rule;
+  height: 1px;
+  margin: 9px calc(-1 * var(--gutter)) 10px;
+  background: var(--grad);
+  opacity: 0.45;
+}
+body.vscode-high-contrast .topbar-rule, body.vscode-high-contrast-light .topbar-rule { background: var(--hc-border, var(--line)); opacity: 1; }
+.brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .brand-mark {
-  width: 28px; height: 28px; border-radius: 8px;
+  width: 26px; height: 26px; border-radius: 8px;
+  flex: none;
   display: grid; place-items: center;
   background: var(--grad-btn);
   color: var(--on-brand);
   box-shadow: var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.25);
 }
-.brand-text { display: flex; flex-direction: column; line-height: 1.2; }
-.brand-title { font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; }
-.brand-sub { font-size: var(--fs-xs); color: var(--fg-3); }
+.brand-text { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+.brand-eyebrow {
+  font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--fg-3);
+}
+.brand-title {
+  font-size: var(--fs-md); font-weight: 600; letter-spacing: -0.01em; color: var(--fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 /* Segmented tabs with sliding thumb */
 .segmented {
@@ -666,8 +687,10 @@ body.vscode-high-contrast .empty-art::before, body.vscode-high-contrast-light .e
 
 /* ---------------- Panel (editor) layout ---------------- */
 @media (min-width: 700px) {
-  .topbar { padding: 14px var(--gutter) 12px; gap: 16px; }
-  .brand { display: flex; }
+  .topbar { display: flex; padding: 14px var(--gutter) 12px; gap: 16px; }
+  .topbar-rule { display: none; }
+  .brand-mark { width: 28px; height: 28px; }
+  .brand-title { font-size: var(--fs-lg); }
   .segmented { flex: 0 0 260px; margin-left: auto; margin-right: auto; }
   .toolbar { gap: 4px; }
   .filters {

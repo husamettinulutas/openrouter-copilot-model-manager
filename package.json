@@ -67,7 +67,7 @@
       "activitybar": [
         {
           "id": "openrouter-explorer",
-          "title": "OpenRouter",
+          "title": "OpenRouter Copilot Model Manager",
           "icon": "resources/activitybar.svg"
         }
       ]
@@ -76,17 +76,8 @@
       "openrouter-explorer": [
         {
           "id": "openrouter-browse",
-          "name": "Model Browser",
+          "name": "OpenRouter Copilot Model Manager",
           "type": "webview"
-        }
-      ]
-    },
-    "menus": {
-      "view/title": [
-        {
-          "command": "openrouter-copilot.syncModels",
-          "when": "view == openrouter-browse",
-          "group": "navigation"
         }
       ]
     },

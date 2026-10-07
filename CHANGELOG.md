@@ -11,6 +11,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **New model cards.** Each card has a provider monogram, labeled capability chips (Vision, Tools, Reasoning, Image out, Free) and a metric strip with input and output price per million tokens, context window and max output. Price dots, a context ring and a max-output bar let you compare models while scanning.
 - **You can tell drafts from live models.** A model you picked shows **Selected**. A model that is already in Copilot shows a green **In Copilot** button, an **Active** pill and a dot on its monogram. Clicking **In Copilot** removes the model from Copilot and refreshes the Active tab and its count at once; before, the Active tab stayed out of date.
 - **Table view in the editor panel.** At 900px and wider, a Cards / Table switch sits next to sort. The table has a sticky header, and you can sort it by model, input price or context from the header. The panel remembers your choice.
+- **A brand header in the sidebar.** The panel opens with the logo and *OpenRouter Copilot Model Manager*, with the key and sync buttons beside it and the Browse / Active tabs below.
+- **A single title for the sidebar.** The view header reads just *OpenRouter Copilot Model Manager* instead of *OpenRouter: Model Browser*. Its duplicate refresh button is gone; sync from the panel's own header or the `OpenRouter: Sync Models from API` command.
 - **Search and filters stay on screen** while you scroll the list, so you can refine a search without scrolling back up.
 - **Active tab:**
   - A summary at the top shows how many models are live in Copilot Chat.

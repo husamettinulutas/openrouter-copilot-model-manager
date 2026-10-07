@@ -43,7 +43,7 @@ Requires VS Code **1.104+** and GitHub Copilot Chat.
 
 ## Quick start
 
-1. Open the **OpenRouter** icon in the activity bar.
+1. Open the **OpenRouter Copilot Model Manager** icon in the activity bar.
 2. Click the **key** icon and paste your OpenRouter API key. Get one at [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys). It is stored in VS Code **SecretStorage**, never in a file.
 3. The catalog loads on its own; click the **sync** icon to refresh it.
 4. Find models: press `/` to search, use the filter chips, the provider menu and sort.
