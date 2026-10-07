@@ -68,7 +68,7 @@
         {
           "id": "openrouter-explorer",
           "title": "OpenRouter",
-          "icon": "$(sparkle)"
+          "icon": "resources/activitybar.svg"
         }
       ]
     },

@@ -1,71 +1,184 @@
-/* ===== DESIGN TOKENS ===== */
-:root {
-  /* Background Colors */
-  --bg-primary:     #0D1117;
-  --bg-secondary:   #161B22;
-  --bg-tertiary:    #21262D;
-  --bg-elevated:    #1C2128;
-  --bg-overlay:     rgba(0, 0, 0, 0.5);
+/* =====================================================================
+   Aurora Glass — design tokens
+   Every base surface / text / line is derived from the active VS Code
+   theme (--vscode-*), so the UI follows light, dark and high-contrast
+   themes. Only the brand gradient and capability hues are custom, and
+   each is tuned per theme kind below.
+   ===================================================================== */
+body {
+  /* ---- Theme roots ---- */
+  --bg: var(--vscode-sideBar-background, var(--vscode-editor-background, #1e1e1e));
+  --fg: var(--vscode-foreground, #cccccc);
+  --fg-2: color-mix(in oklab, var(--fg) 76%, var(--bg));
+  --fg-3: color-mix(in oklab, var(--fg) 58%, var(--bg));
+  --focus: var(--vscode-focusBorder, #0078d4);
 
-  /* Border Colors */
-  --border-primary:   #30363D;
-  --border-secondary: #21262D;
-  --border-focus:     #58A6FF;
+  /* Elevation by mixing the foreground into the background */
+  --surface-1: color-mix(in oklab, var(--fg) 4%, var(--bg));
+  --surface-2: color-mix(in oklab, var(--fg) 7%, var(--bg));
+  --surface-3: color-mix(in oklab, var(--fg) 10%, var(--bg));
+  --line: color-mix(in oklab, var(--fg) 11%, transparent);
+  --line-strong: color-mix(in oklab, var(--fg) 20%, transparent);
+  --wash: color-mix(in oklab, var(--fg) 4%, transparent);
+  --wash-2: color-mix(in oklab, var(--fg) 8%, transparent);
 
-  /* Accent Colors */
-  --accent-blue:    #58A6FF;
-  --accent-green:   #3FB950;
-  --accent-orange:  #D29922;
-  --accent-purple:  #BC8CFF;
-  --accent-red:     #F85149;
-  --accent-cyan:    #39D2C0;
-  --accent-pink:    #F778BA;
-  --accent-yellow:  #E3B341;
+  /* Cards & glass (translucent over the aurora) */
+  --card-bg: color-mix(in oklab, var(--surface-1) 78%, transparent);
+  --card-bg-hover: color-mix(in oklab, var(--surface-2) 86%, transparent);
+  --glass-bg: color-mix(in oklab, var(--bg) 68%, transparent);
+  --glass-strong: color-mix(in oklab, var(--surface-2) 82%, transparent);
+  --glass-blur: blur(16px) saturate(150%);
+  --edge: linear-gradient(180deg, color-mix(in oklab, var(--fg) 16%, transparent), color-mix(in oklab, var(--fg) 5%, transparent) 60%);
+  --hi: inset 0 1px 0 rgb(255 255 255 / 0.045);
 
-  /* Text Colors */
-  --text-primary:   #F0F6FC;
-  --text-secondary: #8B949E;
-  --text-muted:     #6E7681;
-  --text-link:      #58A6FF;
-  --text-on-accent: #FFFFFF;
+  /* Shadows (dark default) */
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.22), 0 6px 18px -10px rgb(0 0 0 / 0.5);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / 0.25), 0 18px 40px -16px rgb(0 0 0 / 0.65);
+  --shadow-3: 0 4px 12px rgb(0 0 0 / 0.3), 0 24px 56px -18px rgb(0 0 0 / 0.75);
 
-  /* Gradients */
-  --gradient-blue:   linear-gradient(135deg, #58A6FF 0%, #388BFD 100%);
-  --gradient-green:  linear-gradient(135deg, #3FB950 0%, #2EA043 100%);
-  --gradient-purple: linear-gradient(135deg, #BC8CFF 0%, #8957E5 100%);
+  /* ---- Brand ---- */
+  --brand-a: oklch(0.72 0.17 292);
+  --brand-b: oklch(0.76 0.13 222);
+  --brand-text: oklch(0.80 0.12 285);
+  --grad: linear-gradient(120deg, var(--brand-a), var(--brand-b));
+  /* Button gradient keeps white text >= 4.5:1 in every theme */
+  --grad-btn: linear-gradient(120deg, oklch(0.54 0.21 290), oklch(0.55 0.16 248));
+  --grad-btn-hover: linear-gradient(120deg, oklch(0.58 0.21 290), oklch(0.59 0.16 248));
+  --on-brand: #ffffff;
+  --brand-glow: 0 6px 20px -6px oklch(0.6 0.2 285 / 0.55);
+  --aurora-a: oklch(0.6 0.2 292 / 0.20);
+  --aurora-b: oklch(0.65 0.14 220 / 0.14);
+  --aurora-c: oklch(0.65 0.17 340 / 0.08);
 
-  /* Shadows */
-  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.5);
+  /* ---- Capability hues ---- */
+  --c-vision: oklch(0.80 0.11 215);
+  --c-tools: oklch(0.83 0.12 80);
+  --c-reason: oklch(0.79 0.13 300);
+  --c-image: oklch(0.79 0.13 350);
+  --c-free: oklch(0.81 0.14 155);
+  --c-live: oklch(0.80 0.17 150);
+  --c-danger: oklch(0.72 0.17 25);
+  --c-info: oklch(0.76 0.12 240);
+  --success: var(--c-live);
+  --success-text: var(--c-live);
+  --text-muted: var(--fg-3);
+  --tile-text-l: 0.83;
+  --tint: 15%;
+  /* Opaque card colour (for rings that must "cut" into the card) */
+  --card-solid: color-mix(in oklab, var(--fg) 5%, var(--bg));
 
-  /* Typography (Increased base sizes for better legibility) */
-  --font-sans:  'Segoe UI', -apple-system, BlinkMacSystemFont, 'Inter', 'Roboto', sans-serif;
-  --font-mono:  'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+  /* ---- Type ---- */
+  --font: var(--vscode-font-family, system-ui, sans-serif);
+  --mono: var(--vscode-editor-font-family, ui-monospace, Consolas, monospace);
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 20px;
 
-  --font-size-xs:   0.75rem;    /* 12px */
-  --font-size-sm:   0.8125rem;  /* 13px */
-  --font-size-base: 0.875rem;   /* 14px */
-  --font-size-md:   0.9375rem;  /* 15px */
-  --font-size-lg:   1.125rem;   /* 18px */
-  --font-size-xl:   1.375rem;   /* 22px */
-  --font-size-2xl:  1.625rem;   /* 26px */
+  /* ---- Space (4px grid) ---- */
+  --s1: 2px; --s2: 4px; --s3: 6px; --s4: 8px; --s5: 12px; --s6: 16px; --s7: 20px; --s8: 24px;
+  --gutter: 12px;
 
-  /* Spacing */
-  --space-1:  4px;
-  --space-2:  8px;
-  --space-3:  12px;
-  --space-4:  16px;
-  --space-5:  20px;
-  --space-6:  24px;
+  /* ---- Radius (concentric) ---- */
+  --r-chip: 6px;
+  --r-ctl: 8px;
+  --r-card: 12px;
+  --r-sheet: 14px;
+  --r-pill: 999px;
 
-  /* Border Radius */
-  --radius-sm:   4px;
-  --radius-md:   8px;
-  --radius-lg:   12px;
-  --radius-full: 9999px;
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
+  --t-fast: 120ms;
+  --t-mid: 200ms;
+  --t-tray: 240ms;
 
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
+  --tray-h: 64px;
+}
+
+/* Editor panel host: paint like the editor, wider gutter */
+@media (min-width: 700px) {
+  body {
+    --bg: var(--vscode-editor-background, var(--vscode-sideBar-background, #1e1e1e));
+    --gutter: 24px;
+  }
+}
+@media (max-width: 319px) {
+  body { --gutter: 8px; }
+}
+
+/* ---------------- Light themes ---------------- */
+body.vscode-light {
+  --fg-2: color-mix(in oklab, var(--fg) 80%, var(--bg));
+  --fg-3: color-mix(in oklab, var(--fg) 62%, var(--bg));
+  --surface-1: color-mix(in oklab, #ffffff 70%, var(--bg));
+  --surface-2: color-mix(in oklab, var(--fg) 4%, var(--bg));
+  --surface-3: color-mix(in oklab, #ffffff 85%, var(--bg));
+  --line: color-mix(in oklab, var(--fg) 12%, transparent);
+  --line-strong: color-mix(in oklab, var(--fg) 22%, transparent);
+  --card-bg: color-mix(in oklab, #ffffff 72%, transparent);
+  --card-bg-hover: color-mix(in oklab, #ffffff 92%, transparent);
+  --glass-bg: color-mix(in oklab, var(--bg) 74%, transparent);
+  --glass-strong: color-mix(in oklab, #ffffff 80%, transparent);
+  --edge: linear-gradient(180deg, color-mix(in oklab, var(--fg) 14%, transparent), color-mix(in oklab, var(--fg) 9%, transparent));
+  --hi: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  --shadow-1: 0 1px 2px rgb(20 20 40 / 0.05), 0 6px 16px -10px rgb(20 20 60 / 0.16);
+  --shadow-2: 0 1px 3px rgb(20 20 40 / 0.06), 0 14px 32px -16px rgb(20 20 60 / 0.24);
+  --shadow-3: 0 2px 6px rgb(20 20 40 / 0.08), 0 20px 44px -18px rgb(20 20 60 / 0.3);
+
+  --brand-a: oklch(0.55 0.22 290);
+  --brand-b: oklch(0.60 0.15 232);
+  --brand-text: oklch(0.48 0.2 288);
+  --brand-glow: 0 6px 18px -8px oklch(0.55 0.2 285 / 0.45);
+  --aurora-a: oklch(0.7 0.16 292 / 0.13);
+  --aurora-b: oklch(0.78 0.11 215 / 0.14);
+  --aurora-c: oklch(0.8 0.1 340 / 0.08);
+
+  --card-solid: color-mix(in oklab, #ffffff 80%, var(--bg));
+  --tint: 12%;
+}
+/* Light hues are shared with high-contrast light (VS Code sets only one theme class) */
+body.vscode-light,
+body.vscode-high-contrast-light {
+  --c-vision: oklch(0.50 0.11 225);
+  --c-tools: oklch(0.53 0.12 65);
+  --c-reason: oklch(0.50 0.19 300);
+  --c-image: oklch(0.52 0.19 355);
+  --c-free: oklch(0.50 0.13 155);
+  --c-live: oklch(0.58 0.17 150);
+  --success-text: oklch(0.47 0.14 150);
+  --c-danger: oklch(0.54 0.2 25);
+  --c-info: oklch(0.52 0.15 245);
+  --tile-text-l: 0.45;
+}
+
+/* ---------------- High contrast ---------------- */
+body.vscode-high-contrast,
+body.vscode-high-contrast-light {
+  --fg-2: var(--fg);
+  --fg-3: var(--vscode-descriptionForeground, var(--fg));
+  --card-bg: var(--bg);
+  --card-bg-hover: var(--bg);
+  --glass-bg: var(--bg);
+  --glass-strong: var(--bg);
+  --glass-blur: none;
+  --line: var(--vscode-contrastBorder, currentColor);
+  --line-strong: var(--vscode-contrastBorder, currentColor);
+  --edge: linear-gradient(var(--vscode-contrastBorder, currentColor), var(--vscode-contrastBorder, currentColor));
+  /* "No shadow" values that stay valid inside comma-separated box-shadow lists */
+  --hi: 0 0 0 0 transparent;
+  --shadow-1: 0 0 0 0 transparent; --shadow-2: 0 0 0 0 transparent; --shadow-3: 0 0 0 0 transparent;
+  --brand-glow: 0 0 0 0 transparent;
+  --grad: linear-gradient(var(--vscode-focusBorder), var(--vscode-focusBorder));
+  --grad-btn: linear-gradient(var(--vscode-button-background), var(--vscode-button-background));
+  --grad-btn-hover: linear-gradient(var(--vscode-button-hoverBackground, var(--vscode-button-background)), var(--vscode-button-hoverBackground, var(--vscode-button-background)));
+  --on-brand: var(--vscode-button-foreground, #fff);
+  --brand-text: var(--fg);
+  --brand-a: var(--focus);
+  --brand-b: var(--focus);
+  --hc-border: var(--vscode-contrastBorder, var(--fg));
+  --hc-active: var(--vscode-contrastActiveBorder, var(--focus));
+  --card-solid: var(--bg);
+  --tint: 0%;
 }

@@ -11,151 +11,161 @@
   <link rel="stylesheet" href="{{animationsCssUri}}">
 </head>
 <body>
-  <div class="app">
+  <!-- Shared SVG gradient for rings / meters (stop colours come from CSS so they follow the theme) -->
+  <svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="grad-brand" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" class="stop-a"></stop>
+        <stop offset="1" class="stop-b"></stop>
+      </linearGradient>
+    </defs>
+  </svg>
 
-    <!-- API Key Banner (shown when no key is set) -->
-    <div class="api-key-banner" id="apikey-banner" style="display:none;">
-      <span class="api-key-banner-icon">🔑</span>
-      <span class="api-key-banner-text">API key not set. Set your OpenRouter API key to browse and add models.</span>
-      <button class="btn btn-sm" id="apikey-banner-btn">Set Key</button>
-    </div>
+  <div class="app" id="app">
+    <div class="aurora" aria-hidden="true"></div>
 
-    <!-- Header -->
-    <div class="header">
-      <div class="header-left">
-        <span class="header-logo">⚡</span>
-        <span class="header-title">OpenRouter Copilot Model Manager</span>
-      </div>
-      <div class="header-actions">
-        <button class="btn-icon" id="apikey-btn" title="Set API Key">🔑</button>
-        <button class="btn-icon" id="sync-btn" title="Sync models from OpenRouter">🔄</button>
-      </div>
-    </div>
-
-    <!-- Tab Bar -->
-    <div class="tab-bar">
-      <button class="tab-btn active" id="tab-browse">🌐 Browse Models</button>
-      <button class="tab-btn" id="tab-active">
-        ✅ Active in Copilot
-        <span class="tab-badge" id="active-tab-count">0</span>
-      </button>
-    </div>
-
-    <!-- TAB 1: BROWSE MODELS -->
-    <div class="tab-content active" id="tab-content-browse">
-      <!-- Search -->
-      <div class="search-section">
-        <div class="search-wrapper">
-          <span class="search-icon">🔍</span>
-          <input
-            type="text"
-            class="search-input"
-            id="search-input"
-            placeholder="Search models by name, provider, or ID..."
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <button class="search-clear" id="search-clear" title="Clear search">✕</button>
-        </div>
-      </div>
-
-      <!-- Filter Bar -->
-      <div class="filter-bar">
-        <button class="filter-chip vision" id="filter-vision">
-          <span class="filter-chip-icon">👁️</span> Vision
-        </button>
-        <button class="filter-chip tools" id="filter-tools">
-          <span class="filter-chip-icon">🔧</span> Tools
-        </button>
-        <button class="filter-chip free" id="filter-free">
-          <span class="filter-chip-icon">✨</span> Free
-        </button>
-        <button class="filter-chip reasoning" id="filter-reasoning">
-          <span class="filter-chip-icon">🧠</span> Reasoning
-        </button>
-
-        <span class="filter-separator"></span>
-
-        <div class="provider-dropdown">
-          <button class="filter-chip" id="provider-filter-btn">🏢 Provider</button>
-          <div class="provider-dropdown-menu" id="provider-menu"></div>
-        </div>
-
-        <span class="filter-separator"></span>
-
-        <select class="sort-select" id="sort-select">
-          <option value="name-asc">Sort: Name A-Z</option>
-          <option value="price-asc">Sort: Price ↑</option>
-          <option value="price-desc">Sort: Price ↓</option>
-          <option value="context-desc">Sort: Context ↓</option>
-          <option value="newest">Sort: Newest</option>
-        </select>
-      </div>
-
-      <!-- Stats Bar -->
-      <div class="stats-bar">
-        <span class="stats-text">
-          Showing <span class="stats-count" id="stats-filtered">0</span>
-          of <span class="stats-count" id="stats-count">0</span> models
+    <!-- Top bar: brand (panel only) · tabs · utility actions -->
+    <header class="topbar">
+      <div class="brand" aria-hidden="true">
+        <span class="brand-mark"><span class="ico" data-icon="sparkle"></span></span>
+        <span class="brand-text">
+          <span class="brand-title">Model Manager</span>
+          <span class="brand-sub">OpenRouter → Copilot Chat</span>
         </span>
       </div>
 
-      <!-- Model List -->
-      <div class="model-list-container" id="model-list-container">
-        <div class="model-list stagger-children" id="model-list">
-          <div class="empty-state">
-            <div class="empty-state-icon">⚡</div>
-            <div class="empty-state-title">Welcome!</div>
-            <div class="empty-state-desc">Set your API key and sync models to get started.</div>
+      <div class="segmented" role="tablist" aria-label="Views" id="tabs">
+        <span class="segmented-thumb" aria-hidden="true"></span>
+        <button class="seg-tab active" id="tab-browse" role="tab" aria-selected="true" aria-controls="tab-content-browse" tabindex="0">
+          <span class="ico" data-icon="layers"></span><span class="seg-label">Browse</span>
+        </button>
+        <button class="seg-tab" id="tab-active" role="tab" aria-selected="false" aria-controls="tab-content-active" tabindex="-1">
+          <span class="ico" data-icon="zap"></span><span class="seg-label">Active</span>
+          <span class="seg-count num" id="active-tab-count">0</span>
+        </button>
+      </div>
+
+      <div class="toolbar">
+        <button class="icon-btn" id="apikey-btn" title="Set OpenRouter API key" aria-label="Set OpenRouter API key">
+          <span class="ico" data-icon="key"></span><span class="attn-dot" aria-hidden="true"></span>
+        </button>
+        <button class="icon-btn" id="sync-btn" title="Sync models from OpenRouter" aria-label="Sync models from OpenRouter">
+          <span class="ico" data-icon="refresh"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- API key banner (shown when no key is set) -->
+    <div class="key-banner" id="apikey-banner" role="region" aria-label="API key required" style="display:none;">
+      <span class="key-banner-icon"><span class="ico" data-icon="key"></span></span>
+      <span class="key-banner-text"><strong>API key not set.</strong> <span class="key-banner-more">Add your OpenRouter key to browse and enable models.</span></span>
+      <button class="btn btn-primary btn-sm" id="apikey-banner-btn">Set key</button>
+    </div>
+
+    <main class="views">
+      <!-- TAB 1: BROWSE -->
+      <section class="tab-content active" id="tab-content-browse" role="tabpanel" aria-labelledby="tab-browse">
+        <div class="filters" id="filters">
+          <div class="search">
+            <span class="search-icon ico" data-icon="search"></span>
+            <input type="text" class="search-input" id="search-input" placeholder="Search models, providers, IDs" aria-label="Search models" autocomplete="off" spellcheck="false" />
+            <kbd class="search-kbd" aria-hidden="true">/</kbd>
+            <button class="search-clear" id="search-clear" title="Clear search" aria-label="Clear search"><span class="ico" data-icon="x"></span></button>
+          </div>
+
+          <div class="chip-row" role="group" aria-label="Capability filters">
+            <button class="chip" data-hue="vision" id="filter-vision" aria-pressed="false"><span class="ico" data-icon="eye"></span><span>Vision</span></button>
+            <button class="chip" data-hue="tools" id="filter-tools" aria-pressed="false"><span class="ico" data-icon="wrench"></span><span>Tools</span></button>
+            <button class="chip" data-hue="free" id="filter-free" aria-pressed="false"><span class="ico" data-icon="gift"></span><span>Free</span></button>
+            <button class="chip" data-hue="reason" id="filter-reasoning" aria-pressed="false"><span class="ico" data-icon="bulb"></span><span>Reasoning</span></button>
+          </div>
+
+          <div class="select-row">
+            <div class="provider-dropdown">
+              <button class="select-btn" id="provider-filter-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="provider-menu" title="Filter by provider">
+                <span class="ico" data-icon="building"></span>
+                <span class="select-btn-label" id="provider-label">All providers</span>
+                <span class="ico chev" data-icon="chevronDown"></span>
+              </button>
+              <div class="provider-menu" id="provider-menu" role="listbox" aria-label="Provider"></div>
+            </div>
+            <div class="select-wrap" title="Sort order">
+              <span class="ico" data-icon="sort"></span>
+              <select class="sort-select" id="sort-select" aria-label="Sort models">
+                <option value="name-asc">Name A–Z</option>
+                <option value="price-asc">Cheapest input</option>
+                <option value="price-desc">Priciest input</option>
+                <option value="context-desc">Largest context</option>
+                <option value="newest">Newest</option>
+              </select>
+              <span class="ico chev" data-icon="chevronDown"></span>
+            </div>
+            <div class="view-toggle" role="group" aria-label="Layout">
+              <button class="view-btn" id="view-cards" data-view="cards" aria-pressed="false" title="Card layout" aria-label="Card layout"><span class="ico" data-icon="grid"></span></button>
+              <button class="view-btn" id="view-table" data-view="table" aria-pressed="true" title="Table layout" aria-label="Table layout"><span class="ico" data-icon="list"></span></button>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- TAB 2: ACTIVE IN COPILOT -->
-    <div class="tab-content" id="tab-content-active">
-      <div style="margin-bottom: var(--space-3); font-size: var(--font-size-sm); color: var(--text-muted);">
-        Models currently enabled in Copilot Chat under the <code>OpenRouter</code> provider. Click <b>Remove</b> to disable any model.
-      </div>
-      <div id="active-models-list">
-        <div class="empty-state">
-          <div class="empty-state-icon">📌</div>
-          <div class="empty-state-title">No Active Copilot Models</div>
-          <div class="empty-state-desc">Browse models in the first tab and click "Apply to Copilot" to add them.</div>
+        <div class="stats-bar">
+          <span class="stats-text" aria-live="polite">Showing <b class="num" id="stats-filtered">0</b> of <b class="num" id="stats-count">0</b> models</span>
+          <button class="link-btn" id="stats-clear" hidden>Clear filters</button>
         </div>
-      </div>
-    </div>
 
-    <!-- Bottom Panel: Selected Models (Drafts to apply) -->
-    <div class="bottom-panel" id="bottom-panel">
-      <div class="bottom-panel-header" id="bottom-panel-toggle">
-        <div class="bottom-panel-title">
-          <span>📌 Selected Models (Draft)</span>
-          <span class="selected-count-badge" id="selected-count">0</span>
-        </div>
-        <div class="bottom-panel-actions">
-          <button class="btn btn-success btn-sm" id="apply-btn" disabled>
-            Apply to Copilot
-          </button>
-        </div>
-      </div>
-      <div class="bottom-panel-body" id="bottom-panel-body" style="display:block;">
-        <div class="selected-model-list" id="selected-model-list">
-          <div style="text-align:center; padding: var(--space-3); color: var(--text-muted); font-size: var(--font-size-sm);">
-            No models selected. Browse and add models above.
+        <div class="model-list-container" id="model-list-container">
+          <div class="list-head" id="list-head">
+            <span class="lh-cell lh-model"><button class="lh-btn" data-sort="name-asc" aria-sort="ascending" aria-label="Model, sort by name A to Z">Model<span class="lh-arrow" aria-hidden="true"></span></button></span>
+            <span class="lh-cell lh-caps">Capabilities</span>
+            <span class="lh-cell lh-num lh-in"><button class="lh-btn" data-sort="price-asc" aria-sort="none" aria-label="Input price per million tokens, sort cheapest first">Input $/M<span class="lh-arrow" aria-hidden="true"></span></button></span>
+            <span class="lh-cell lh-num lh-out">Output $/M</span>
+            <span class="lh-cell lh-num lh-ctx"><button class="lh-btn" data-sort="context-desc" aria-sort="none" aria-label="Context window, sort largest first">Context<span class="lh-arrow" aria-hidden="true"></span></button></span>
+            <span class="lh-cell lh-num lh-max">Max out</span>
+            <span class="lh-cell lh-act"><span class="sr-only">Actions</span></span>
           </div>
+          <div class="model-list" id="model-list"></div>
+        </div>
+      </section>
+
+      <!-- TAB 2: ACTIVE IN COPILOT -->
+      <section class="tab-content" id="tab-content-active" role="tabpanel" aria-labelledby="tab-active">
+        <div class="active-summary" id="active-summary"></div>
+        <div class="active-list" id="active-models-list"></div>
+      </section>
+    </main>
+
+    <!-- Draft tray: models selected but not yet applied -->
+    <section class="tray" id="bottom-panel" aria-label="Selected models">
+      <div class="tray-head">
+        <button class="tray-toggle" id="bottom-panel-toggle" aria-expanded="false" aria-controls="bottom-panel-body">
+          <span class="tray-count num" id="selected-count">0</span>
+          <span class="tray-label">
+            <span class="tray-title" id="tray-title">No models selected</span>
+            <span class="tray-names" id="tray-names">Pick models with Select</span>
+          </span>
+          <span class="ico tray-chev" data-icon="chevronUp"></span>
+        </button>
+        <button class="btn btn-primary btn-apply" id="apply-btn" disabled aria-keyshortcuts="Control+Enter" title="Apply selected models to Copilot (Ctrl+Enter)">
+          <span class="ico" data-icon="sparkle"></span><span class="apply-label">Apply to Copilot</span><kbd class="apply-kbd" id="apply-kbd" aria-hidden="true">Ctrl ↵</kbd>
+        </button>
+      </div>
+      <div class="tray-body" id="bottom-panel-body">
+        <div class="tray-body-inner">
+          <ul class="draft-list" id="selected-model-list"></ul>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loading-overlay">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Fetching models from OpenRouter...</div>
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite">
+      <div class="loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="loading-text">Fetching models from OpenRouter…</span>
+      </div>
     </div>
+    <div class="progress" id="progress" aria-hidden="true"></div>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toast-container"></div>
+    <!-- Toasts -->
+    <div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
   </div>
 
   <script src="{{vscodeApiJsUri}}"></script>
