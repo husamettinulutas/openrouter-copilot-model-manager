@@ -5,6 +5,7 @@ import { ModelBrowserProvider } from './views/webviewProvider';
 import { OpenRouterChatProvider } from './provider/openRouterProvider';
 import { SecretsManager } from './utils/secrets';
 import { Logger } from './utils/logger';
+import { FETCH_TOOL_NAME, FetchWebPageTool } from './tools/fetchWebPageTool';
 
 const PROVIDER_VENDOR_ID = 'openrouter-copilot-model-manager';
 
@@ -64,6 +65,11 @@ export function activate(context: vscode.ExtensionContext) {
   // with VS Code's built-in BYOK OpenRouter provider.
   context.subscriptions.push(
     vscode.lm.registerLanguageModelChatProvider(PROVIDER_VENDOR_ID, openRouterProvider)
+  );
+
+  // Copilot's fetch_webpage needs an active Copilot subscription; this one does not.
+  context.subscriptions.push(
+    vscode.lm.registerTool(FETCH_TOOL_NAME, new FetchWebPageTool())
   );
 
   // Create status bar item for token usage stats
