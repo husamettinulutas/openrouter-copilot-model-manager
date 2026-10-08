@@ -55,7 +55,10 @@
         "modelDescription": "Fetches a public web page by URL and returns its main text as Markdown-like text (headings, lists, links, code blocks). Use it to read documentation, articles, READMEs, FAQs or any page the user mentions. Prefer this tool over fetch_webpage: fetch_webpage depends on a GitHub Copilot subscription and fails without one (for example with 'Your subscription has ended'). Long pages come back in parts; the result ends with the offset to pass to read the next part.",
         "canBeReferencedInPrompt": true,
         "icon": "$(globe)",
-        "tags": ["web", "fetch"],
+        "tags": [
+          "web",
+          "fetch"
+        ],
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -68,7 +71,38 @@
               "description": "Character offset to continue a long page from, as given at the end of the previous result. Omit for the start of the page."
             }
           },
-          "required": ["url"]
+          "required": [
+            "url"
+          ]
+        }
+      },
+      {
+        "name": "openrouter_codebaseSearch",
+        "toolReferenceName": "openrouterCodebase",
+        "displayName": "Codebase Search (OpenRouter)",
+        "userDescription": "Search the workspace code by meaning. Works without a GitHub Copilot subscription.",
+        "modelDescription": "Semantic search over the user's workspace. Returns the code locations (path:start-end with the code) that best match a natural-language query, e.g. 'where API keys are validated' or 'retry logic for HTTP requests'. Use it to find relevant code when you do not know file or symbol names; use text search instead for exact identifiers or strings. Copilot's own codebase/semantic search is not available for this model, so prefer this tool for finding code by meaning. The first call indexes the workspace, which can take a minute.",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(search)",
+        "tags": [
+          "codebase",
+          "search"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "What to look for, described in natural language or as a code fragment."
+            },
+            "maxResults": {
+              "type": "number",
+              "description": "How many locations to return (1-20, default 8)."
+            }
+          },
+          "required": [
+            "query"
+          ]
         }
       }
     ],
@@ -87,6 +121,26 @@
         "command": "openrouter-copilot.syncModels",
         "title": "OpenRouter: Sync Models from API",
         "icon": "$(sync)"
+      },
+      {
+        "command": "openrouter-copilot.chooseUtilityModel",
+        "title": "OpenRouter: Choose Utility Model for Copilot"
+      },
+      {
+        "command": "openrouter-copilot.toggleWebSearch",
+        "title": "OpenRouter: Toggle Web Search"
+      },
+      {
+        "command": "openrouter-copilot.toggleInlineCompletions",
+        "title": "OpenRouter: Toggle Inline Completions"
+      },
+      {
+        "command": "openrouter-copilot.rebuildCodebaseIndex",
+        "title": "OpenRouter: Rebuild Codebase Search Index"
+      },
+      {
+        "command": "openrouter-copilot.clearCodebaseIndex",
+        "title": "OpenRouter: Delete Codebase Search Index"
       }
     ],
     "viewsContainers": {
@@ -165,7 +219,10 @@
           "description": "Include stream_options.include_usage in requests to receive token usage statistics. Disable this if you encounter 'invalid_json' errors — some backend providers (Azure, certain OpenAI endpoints) reject this field."
         },
         "openrouterModelManager.maxInputTokensOverride": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "default": null,
           "description": "Override the maxInputTokens reported to VS Code for all models. Lower values trigger conversation compaction (summarization of older messages) earlier, preventing oversized request bodies. Leave empty to auto-calculate from each model's context window. Recommended: 200000 for most use cases.",
           "minimum": 4096
@@ -187,6 +244,77 @@
             "max"
           ],
           "description": "Default thinking effort for reasoning models when Copilot has not set one yet. Leave empty to use each model's catalog default. The Copilot model-picker Thinking Effort submenu overrides this per session."
+        },
+        "openrouterModelManager.utilityModel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "markdownDescription": "OpenRouter model Copilot uses for chat titles, commit messages, rename suggestions and repairing failed edits. Copilot's own utility models need a Copilot subscription. Set it with the **OpenRouter: Choose Utility Model for Copilot** command, which also writes `chat.utilityModel` and `chat.utilitySmallModel`."
+        },
+        "openrouterModelManager.webSearch.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Let models search the web while answering, through OpenRouter's `openrouter:web_search` server tool. Only for models that support tool calling. Each search is billed by OpenRouter on top of tokens (about $0.007 with the default engine; see `webSearch.engine`)."
+        },
+        "openrouterModelManager.webSearch.engine": {
+          "type": "string",
+          "enum": [
+            "exa",
+            "parallel",
+            "native",
+            "auto"
+          ],
+          "default": "exa",
+          "enumDescriptions": [
+            "Exa, fast mode: about $0.007 per search. Up to date in our tests.",
+            "Parallel, fast mode: about $0.001 per search. Cheapest, but its results can be months old.",
+            "The model provider's own search (OpenAI, Anthropic, Google, ...), at the provider's price; falls back to Exa.",
+            "Native search where the provider has it, otherwise Exa."
+          ],
+          "description": "Search engine OpenRouter uses for web search."
+        },
+        "openrouterModelManager.webSearch.maxResults": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Results per search. More results cost more input tokens."
+        },
+        "openrouterModelManager.webSearch.showSources": {
+          "type": "boolean",
+          "default": true,
+          "description": "List the web pages a searched answer is based on at the end of the answer."
+        },
+        "openrouterModelManager.codebaseSearch.embeddingModel": {
+          "type": "string",
+          "default": "openai/text-embedding-3-small",
+          "markdownDescription": "OpenRouter embedding model for the **Codebase Search (OpenRouter)** tool. Changing it rebuilds the index. Free embedding models may be unavailable under strict OpenRouter privacy settings."
+        },
+        "openrouterModelManager.codebaseSearch.maxFiles": {
+          "type": "number",
+          "default": 3000,
+          "minimum": 100,
+          "maximum": 20000,
+          "description": "Most files to index per workspace. Files over 256 KB, binaries, secrets (.env, keys) and build output are always skipped."
+        },
+        "openrouterModelManager.inlineCompletions.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Inline code suggestions (ghost text) from an OpenRouter model, for use without a Copilot subscription. Each suggestion is a paid request. Leave off if Copilot already gives you inline suggestions."
+        },
+        "openrouterModelManager.inlineCompletions.model": {
+          "type": "string",
+          "default": "mistralai/codestral-2508",
+          "description": "OpenRouter model for inline suggestions. Pick a fast one; Codestral answers in about a second."
+        },
+        "openrouterModelManager.inlineCompletions.debounceMs": {
+          "type": "number",
+          "default": 350,
+          "minimum": 100,
+          "maximum": 2000,
+          "description": "How long typing must pause before a suggestion is requested, in milliseconds."
         },
         "openrouterModelManager.sanitizeBase64Content": {
           "type": "boolean",
@@ -218,7 +346,7 @@
     "build": "node esbuild.js --production",
     "watch": "node esbuild.js --watch",
     "package": "npx @vscode/vsce package --no-dependencies",
-    "test": "npx --yes tsx --test src/__tests__/apiKeyUtils.test.ts src/__tests__/tokenEstimation.test.ts src/__tests__/reasoningEffort.test.ts src/__tests__/toolResultContent.test.ts src/__tests__/servedModel.test.ts src/__tests__/htmlToText.test.ts"
+    "test": "npx --yes tsx --test src/__tests__/apiKeyUtils.test.ts src/__tests__/tokenEstimation.test.ts src/__tests__/reasoningEffort.test.ts src/__tests__/toolResultContent.test.ts src/__tests__/servedModel.test.ts src/__tests__/htmlToText.test.ts src/__tests__/webSearch.test.ts src/__tests__/utilityModel.test.ts src/__tests__/codebase.test.ts src/__tests__/completionPrompt.test.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
