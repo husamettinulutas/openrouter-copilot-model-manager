@@ -3,6 +3,10 @@
 All notable changes to **OpenRouter Copilot Model Manager** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.2.2]
+
+- **Web fetch without a Copilot subscription.** Copilot's built-in `fetch_webpage` tool sends page text to GitHub's servers to pick the relevant parts, so it fails with *"Your subscription has ended"* when your Copilot subscription has lapsed, whichever model you use. The extension now adds its own **Fetch Web Page (OpenRouter)** tool to agent mode. It downloads the page itself, turns it into readable text with headings, lists, links and code blocks, and returns long pages in parts. VS Code asks before each fetch, and you can allow a site for the session or always. Models are told to prefer it; you can also name it with `#openrouterFetch`.
+
 ## [1.2.1]
 
 - **See which model answered.** When you use a router such as `openrouter/auto`, the status bar now names the model that actually answered, for example `· claude-4-sonnet-20250522`. Its tooltip lists the requested model, the model that answered and the upstream provider, and the **OpenRouter** output channel logs them for every request.

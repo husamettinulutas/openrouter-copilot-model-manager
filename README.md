@@ -29,6 +29,7 @@
 - **Add to Copilot in one click.** Select models, then press **Apply to Copilot**. They appear in the Copilot Chat model picker under **OpenRouter**, with no reload and no config file.
 - **Manage what is live.** The **Active** tab lists every model in Copilot. Remove one, or set its default **Thinking effort**.
 - **Full agent mode in Copilot Chat.** Tool calling, vision input, streamed reasoning, prompt caching, retries with backoff, and token usage and cost in the status bar.
+- **Web fetch that does not need a Copilot subscription.** Agent mode gets a **Fetch Web Page (OpenRouter)** tool (`#openrouterFetch`) that reads a page and hands its text to the model. Copilot's own fetch tool fails once a Copilot subscription has lapsed; this one does not.
 - **See which model answered.** With a router such as `openrouter/auto`, the status bar names the model that actually answered and its provider.
 - **Fits anywhere.** The panel follows your VS Code theme (light, dark or high contrast) and works from a narrow sidebar up to a full editor tab.
 
@@ -37,7 +38,7 @@
 Search **OpenRouter Copilot Model Manager** in the VS Code Extensions view, or install a `.vsix`:
 
 ```bash
-code --install-extension openrouter-copilot-model-manager-1.2.1.vsix
+code --install-extension openrouter-copilot-model-manager-1.2.2.vsix
 ```
 
 Requires VS Code **1.104+** and GitHub Copilot Chat.
@@ -112,6 +113,7 @@ All settings are under `openrouterModelManager.*`:
 | --- | --- |
 | Chat (text to text) | ✅ |
 | Tool calling (agent mode) | ✅ |
+| Web fetch without a Copilot subscription | ✅ |
 | Vision / image input | ✅ |
 | Thinking / reasoning display | ✅ |
 | Thinking effort picker | ✅ |
