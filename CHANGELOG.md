@@ -3,6 +3,16 @@
 All notable changes to **OpenRouter Copilot Model Manager** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.0]
+
+**Use Copilot without a Copilot subscription.** Several Copilot features call GitHub's own services and fail, or are missing, without a paid plan. The extension now provides each of them through OpenRouter. The README has a table of what is covered.
+
+- **Web search.** Run **OpenRouter: Toggle Web Search** and models that call tools can search the web while answering, through OpenRouter's web search. The pages the answer used are listed under it. It uses Exa by default (about $0.007 per search), which returned current results in our tests; Parallel costs about $0.001 but its results can be months old. If a provider refuses web search, the request goes through without it.
+- **Semantic code search.** A **Codebase Search (OpenRouter)** tool (`#openrouterCodebase`) finds code by meaning, which Copilot's `#codebase` no longer offers to OpenRouter models. The first search asks before indexing the workspace with OpenRouter embeddings; the index stays on your machine, and later searches only embed files that changed. `.env`, key files, binaries and build output are never sent.
+- **Chat titles, commit messages and edit repair.** **OpenRouter: Choose Utility Model for Copilot** points Copilot's utility models at a small OpenRouter model (Gemini 3.1 Flash Lite is suggested). Without one, these fail when you have no Copilot plan. The extension offers this once; it never replaces a utility model you set yourself without asking.
+- **Inline suggestions.** **OpenRouter: Toggle Inline Completions** turns on ghost-text suggestions from an OpenRouter model (Codestral by default, about a second per suggestion). Off by default: every suggestion is a paid request.
+- **API key from the environment.** When no key is stored, the extension uses `OPENROUTER_API_KEY`.
+
 ## [1.2.2]
 
 - **Web fetch without a Copilot subscription.** Copilot's built-in `fetch_webpage` tool sends page text to GitHub's servers to pick the relevant parts, so it fails with *"Your subscription has ended"* when your Copilot subscription has lapsed, whichever model you use. The extension now adds its own **Fetch Web Page (OpenRouter)** tool to agent mode. It downloads the page itself, turns it into readable text with headings, lists, links and code blocks, and returns long pages in parts. VS Code asks before each fetch, and you can allow a site for the session or always. Models are told to prefer it; you can also name it with `#openrouterFetch`.

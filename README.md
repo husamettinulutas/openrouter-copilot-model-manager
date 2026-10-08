@@ -29,7 +29,7 @@
 - **Add to Copilot in one click.** Select models, then press **Apply to Copilot**. They appear in the Copilot Chat model picker under **OpenRouter**, with no reload and no config file.
 - **Manage what is live.** The **Active** tab lists every model in Copilot. Remove one, or set its default **Thinking effort**.
 - **Full agent mode in Copilot Chat.** Tool calling, vision input, streamed reasoning, prompt caching, retries with backoff, and token usage and cost in the status bar.
-- **Web fetch that does not need a Copilot subscription.** Agent mode gets a **Fetch Web Page (OpenRouter)** tool (`#openrouterFetch`) that reads a page and hands its text to the model. Copilot's own fetch tool fails once a Copilot subscription has lapsed; this one does not.
+- **Works without a Copilot subscription.** Web fetch, web search, semantic code search, chat titles and commit messages, and inline suggestions all run through OpenRouter. See [Without a Copilot subscription](#without-a-copilot-subscription).
 - **See which model answered.** With a router such as `openrouter/auto`, the status bar names the model that actually answered and its provider.
 - **Fits anywhere.** The panel follows your VS Code theme (light, dark or high contrast) and works from a narrow sidebar up to a full editor tab.
 
@@ -38,7 +38,7 @@
 Search **OpenRouter Copilot Model Manager** in the VS Code Extensions view, or install a `.vsix`:
 
 ```bash
-code --install-extension openrouter-copilot-model-manager-1.2.2.vsix
+code --install-extension openrouter-copilot-model-manager-1.3.0.vsix
 ```
 
 Requires VS Code **1.104+** and GitHub Copilot Chat.
@@ -80,6 +80,23 @@ Reasoning models get a **Thinking Effort** submenu in the Copilot model picker, 
 | `←` `→` | Switch between Browse and Active |
 | `↑` `↓` | Move through the provider menu |
 
+## Without a Copilot subscription
+
+Copilot Chat works with OpenRouter models without a paid Copilot plan. Several Copilot features still call GitHub's own services, though, and fail or disappear without a subscription. The extension replaces them with OpenRouter:
+
+| Copilot feature | Without a subscription | What this extension adds |
+| --- | --- | --- |
+| Fetch a web page (`#fetch`) | Fails with *"Your subscription has ended"* when you are signed in with a lapsed plan | **Fetch Web Page (OpenRouter)** tool, `#openrouterFetch`. On by default. |
+| Web search | Copilot has none for OpenRouter models | OpenRouter web search with sources under the answer. Run **OpenRouter: Toggle Web Search**. About $0.007 per search with Exa. |
+| Semantic code search (`#codebase`) | Not offered to OpenRouter models | **Codebase Search (OpenRouter)** tool, `#openrouterCodebase`. The first use asks before indexing the workspace; indexing a typical repository costs under a cent. `.env` and key files are never sent. |
+| Chat titles, commit messages, rename suggestions, repairing failed edits | Fail, or quietly do nothing | Run **OpenRouter: Choose Utility Model for Copilot** (the extension also offers it once). It points `chat.utilityModel` and `chat.utilitySmallModel` at a small OpenRouter model. |
+| Inline suggestions (ghost text) | Not available | Run **OpenRouter: Toggle Inline Completions**. Off by default, because every suggestion is a paid request. Codestral answers in about a second. |
+| Searching other GitHub repositories (`github_repo`) | Fails | Not covered. Add the [GitHub MCP server](https://github.com/github/github-mcp-server) with a personal access token. |
+
+**If your Copilot subscription has ended, sign out of GitHub in VS Code** (Accounts menu → your GitHub account → Sign Out). Copilot treats a signed-in account without a plan more strictly than no account at all: signed out, OpenRouter models are fully supported and Copilot stops asking for a subscription.
+
+Some Copilot extras cannot be replaced from an extension and stay unavailable without a plan: thinking-section titles, the goal summary badge, "explain changes" for edits and dictation cleanup.
+
 ## Commands
 
 | Command | Description |
@@ -87,6 +104,11 @@ Reasoning models get a **Thinking Effort** submenu in the Copilot model picker, 
 | `OpenRouter: Browse Models` | Open the model browser in an editor tab |
 | `OpenRouter: Set API Key` | Set or update your OpenRouter API key |
 | `OpenRouter: Sync Models from API` | Fetch the latest model catalog |
+| `OpenRouter: Choose Utility Model for Copilot` | Pick the model for chat titles, commit messages and edit repair |
+| `OpenRouter: Toggle Web Search` | Let models search the web while answering |
+| `OpenRouter: Toggle Inline Completions` | Inline code suggestions from an OpenRouter model |
+| `OpenRouter: Rebuild Codebase Search Index` | Index the workspace again from scratch |
+| `OpenRouter: Delete Codebase Search Index` | Delete this workspace's local search index |
 
 ## Settings
 
@@ -106,6 +128,18 @@ All settings are under `openrouterModelManager.*`:
 | `enableStreamUsage` | `true` | Request token usage while streaming; turn off if a provider answers `invalid_json` |
 | `sanitizeBase64Content` | `true` | Strip long base64 blobs from prompts so guardrails do not block them; images are not affected |
 | `logLevel` | `info` | Output-channel verbosity: `debug`, `info`, `warn` or `error` |
+| `utilityModel` | *(none)* | OpenRouter model for chat titles, commit messages and edit repair; set it with the command |
+| `webSearch.enabled` | `false` | Let models that call tools search the web |
+| `webSearch.engine` | `exa` | `exa` (about $0.007 per search), `parallel` (about $0.001, results can be stale), `native` or `auto` |
+| `webSearch.maxResults` | `3` | Results per search |
+| `webSearch.showSources` | `true` | List the pages an answer used under it |
+| `codebaseSearch.embeddingModel` | `openai/text-embedding-3-small` | Embedding model for codebase search |
+| `codebaseSearch.maxFiles` | `3000` | Most files to index per workspace |
+| `inlineCompletions.enabled` | `false` | Inline suggestions from OpenRouter |
+| `inlineCompletions.model` | `mistralai/codestral-2508` | Model for inline suggestions |
+| `inlineCompletions.debounceMs` | `350` | Typing pause before a suggestion is requested |
+
+The API key can also come from the `OPENROUTER_API_KEY` environment variable when none is stored.
 
 ## Supported capabilities
 
@@ -113,7 +147,9 @@ All settings are under `openrouterModelManager.*`:
 | --- | --- |
 | Chat (text to text) | ✅ |
 | Tool calling (agent mode) | ✅ |
-| Web fetch without a Copilot subscription | ✅ |
+| Web fetch, web search and codebase search without a Copilot subscription | ✅ |
+| Utility model for titles and commit messages | ✅ |
+| Inline suggestions (opt-in) | ✅ |
 | Vision / image input | ✅ |
 | Thinking / reasoning display | ✅ |
 | Thinking effort picker | ✅ |
