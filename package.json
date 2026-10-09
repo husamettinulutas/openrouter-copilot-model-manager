@@ -2,7 +2,7 @@
   "name": "openrouter-copilot-model-manager",
   "displayName": "OpenRouter Copilot Model Manager",
   "description": "Browse, filter, and add OpenRouter models to VS Code Copilot Chat with a rich visual interface. Supports pricing display, capability filtering (text/vision/tools), and one-click Copilot integration.",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "license": "MIT",
   "publisher": "husamettinulutas",
   "author": {
@@ -253,6 +253,11 @@
           "default": null,
           "markdownDescription": "OpenRouter model Copilot uses for chat titles, commit messages, rename suggestions and repairing failed edits. Copilot's own utility models need a Copilot subscription. Set it with the **OpenRouter: Choose Utility Model for Copilot** command, which also writes `chat.utilityModel` and `chat.utilitySmallModel`."
         },
+        "openrouterModelManager.replaceCopilotFetch": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Leave Copilot's own `fetch_webpage` tool out of requests to OpenRouter models whenever **Fetch Web Page (OpenRouter)** is available. Copilot's fails for anyone signed in to GitHub without an active Copilot plan, and models often pick it first."
+        },
         "openrouterModelManager.webSearch.enabled": {
           "type": "boolean",
           "default": false,
@@ -346,7 +351,7 @@
     "build": "node esbuild.js --production",
     "watch": "node esbuild.js --watch",
     "package": "npx @vscode/vsce package --no-dependencies",
-    "test": "npx --yes tsx --test src/__tests__/apiKeyUtils.test.ts src/__tests__/tokenEstimation.test.ts src/__tests__/reasoningEffort.test.ts src/__tests__/toolResultContent.test.ts src/__tests__/servedModel.test.ts src/__tests__/htmlToText.test.ts src/__tests__/webSearch.test.ts src/__tests__/utilityModel.test.ts src/__tests__/codebase.test.ts src/__tests__/completionPrompt.test.ts"
+    "test": "npx --yes tsx --test src/__tests__/apiKeyUtils.test.ts src/__tests__/tokenEstimation.test.ts src/__tests__/reasoningEffort.test.ts src/__tests__/toolResultContent.test.ts src/__tests__/servedModel.test.ts src/__tests__/htmlToText.test.ts src/__tests__/webSearch.test.ts src/__tests__/utilityModel.test.ts src/__tests__/codebase.test.ts src/__tests__/completionPrompt.test.ts src/__tests__/toolReplacement.test.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
