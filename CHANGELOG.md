@@ -3,6 +3,13 @@
 All notable changes to **OpenRouter Copilot Model Manager** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.3]
+
+**Copilot Chat now shows how much context you have used.**
+
+- **The Context Window indicator in Copilot Chat now fills in for OpenRouter models.** Before, it always read *0 tokens*. After each response, the extension passes the token counts OpenRouter returned (prompt, completion, cached and reasoning tokens) to Copilot, so you can see how full the window is and compact in time. This needs VS Code / Copilot Chat **1.120 or newer**, the first release that reads usage from third-party models. Older versions ignore it.
+- If a provider ends the stream without usage data (for example with `openrouterModelManager.enableStreamUsage` turned off), the extension reports an estimate so the indicator still moves.
+
 ## [1.3.2]
 
 - **DeepSeek tool calls run instead of showing up as markup.** DeepSeek models such as `deepseek/deepseek-v4.1-flash` sometimes write a tool call into the reply as DSML text (`<｜DSML｜invoke name="…">`, `｜calls｜ … ｜/calls｜`) instead of a structured tool call, so the chat showed raw markup and the tool never ran. The extension now takes that markup out of the reply and runs the call. The older `<｜tool▁calls▁begin｜>` form is handled the same way. Markup that holds no usable call is still shown as is.

@@ -16,6 +16,7 @@ import {
   buildThinkingEffortSchema,
   resolveReasoningEffort,
 } from '../utils/reasoningEffort';
+import { COPILOT_USAGE_MIME, CopilotUsage, estimatedUsage, normalizeUsage } from '../utils/usage';
 
 // ─── Configuration helper ────────────────────────────────────────────────────
 
@@ -880,6 +881,9 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
           let buffer = '';
           const pendingToolCalls = new Map<number, { id: string; name: string; arguments: string }>();
           let usageData: any = null;
+          // Characters streamed back, for a usage estimate when the provider
+          // ends the stream without a usage chunk.
+          let streamedChars = 0;
           // The model and upstream provider OpenRouter actually used (differs from
           // requestBody.model for routers such as openrouter/auto)
           let servedModel: string | undefined;
@@ -940,11 +944,13 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
                 // via delta.reasoning or delta.reasoning_content fields.
                 const reasoning = delta?.reasoning || delta?.reasoning_content;
                 if (reasoning) {
+                  streamedChars += reasoning.length;
                   this.reportReasoning(reasoning, progress);
                 }
 
                 // ── Text content ──
                 if (delta?.content) {
+                  streamedChars += delta.content.length;
                   const visible = dsml ? dsml.push(delta.content) : delta.content;
                   if (visible) { progress.report(new vscode.LanguageModelTextPart(visible)); }
                 }
@@ -964,7 +970,10 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
                     const pending = pendingToolCalls.get(idx)!;
                     if (tc.id) { pending.id = tc.id; }
                     if (tc.function?.name) { pending.name += tc.function.name; }
-                    if (tc.function?.arguments) { pending.arguments += tc.function.arguments; }
+                    if (tc.function?.arguments) {
+                      pending.arguments += tc.function.arguments;
+                      streamedChars += tc.function.arguments.length;
+                    }
                   }
                 }
 
@@ -990,6 +999,21 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
 
             // Update usage stats in status bar
             this.updateUsageStats(usageData, requestBody.model, servedModel, servedProvider);
+
+            // Feed Copilot's Context Window indicator (it shows 0 otherwise).
+            if (!token.isCancellationRequested) {
+              this.reportUsage(
+                normalizeUsage(usageData) ??
+                  estimatedUsage(
+                    // Image data URLs would count as hundreds of thousands of tokens.
+                    this.estimateTokens(
+                      JSON.stringify(requestBody.messages ?? []).replace(/data:[^"]*/g, ''),
+                    ),
+                    Math.ceil(streamedChars / 4),
+                  ),
+                progress,
+              );
+            }
 
             resolve();
           });
@@ -1123,6 +1147,26 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
   // ────────────────────────────────────────────────────────────────────────────
   // Usage statistics
   // ────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Hand token usage to Copilot Chat as a `LanguageModelDataPart` with the
+   * `usage` MIME type — the channel Copilot (VS Code ≥ 1.120) reads to fill
+   * the chat's Context Window indicator for extension-contributed models.
+   * Older Copilot builds ignore unknown data parts, so this is safe everywhere.
+   */
+  private reportUsage(
+    usage: CopilotUsage,
+    progress: vscode.Progress<vscode.LanguageModelResponsePart>,
+  ): void {
+    const DataPart = (vscode as any).LanguageModelDataPart;
+    if (typeof DataPart !== 'function') { return; }
+    try {
+      const data = new TextEncoder().encode(JSON.stringify(usage));
+      progress.report(new DataPart(data, COPILOT_USAGE_MIME));
+    } catch (e) {
+      Logger.warn(`Could not report usage to Copilot: ${(e as Error)?.message ?? e}`);
+    }
+  }
 
   /**
    * Update the status bar with token usage, dollar cost and the model that

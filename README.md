@@ -28,7 +28,7 @@
 - **Compare at a glance.** Every model shows its capabilities, input and output price per million tokens, context window and max output, with small meters so you can compare while scanning. In an editor tab the list becomes a sortable table.
 - **Add to Copilot in one click.** Select models, then press **Apply to Copilot**. They appear in the Copilot Chat model picker under **OpenRouter**, with no reload and no config file.
 - **Manage what is live.** The **Active** tab lists every model in Copilot. Remove one, or set its default **Thinking effort**.
-- **Full agent mode in Copilot Chat.** Tool calling, vision input, streamed reasoning, prompt caching, retries with backoff, and token usage and cost in the status bar.
+- **Full agent mode in Copilot Chat.** Tool calling, vision input, streamed reasoning, prompt caching, retries with backoff, token usage and cost in the status bar, and a working Context Window indicator in the chat (VS Code 1.120 or newer).
 - **Works without a Copilot subscription.** Web fetch, web search, semantic code search, chat titles and commit messages, and inline suggestions all run through OpenRouter. See [Without a Copilot subscription](#without-a-copilot-subscription).
 - **See which model answered.** With a router such as `openrouter/auto`, the status bar names the model that actually answered and its provider.
 - **Fits anywhere.** The panel follows your VS Code theme (light, dark or high contrast) and works from a narrow sidebar up to a full editor tab.
