@@ -1,6 +1,11 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { estimatedUsage, normalizeUsage } from '../utils/usage';
+import {
+  autoCompactPercent,
+  copilotCompactInputTokens,
+  estimatedUsage,
+  normalizeUsage,
+} from '../utils/usage';
 
 describe('normalizeUsage', () => {
   it('keeps OpenRouter counts and drops extra fields', () => {
@@ -48,5 +53,35 @@ describe('estimatedUsage', () => {
       completion_tokens: 21,
       total_tokens: 121,
     });
+  });
+});
+
+describe('autoCompactPercent', () => {
+  it('treats empty, zero and non-numbers as unset', () => {
+    assert.equal(autoCompactPercent(null), undefined);
+    assert.equal(autoCompactPercent(undefined), undefined);
+    assert.equal(autoCompactPercent(0), undefined);
+    assert.equal(autoCompactPercent('60'), undefined);
+    assert.equal(autoCompactPercent(Number.NaN), undefined);
+  });
+
+  it('rounds and clamps to 10–95', () => {
+    assert.equal(autoCompactPercent(60.4), 60);
+    assert.equal(autoCompactPercent(3), 10);
+    assert.equal(autoCompactPercent(100), 95);
+  });
+});
+
+describe('copilotCompactInputTokens', () => {
+  it('keeps the safe default when no point is chosen', () => {
+    assert.equal(copilotCompactInputTokens(128_000, undefined, 100_800), 100_800);
+  });
+
+  it('lowers maxInputTokens to the chosen share of the window', () => {
+    assert.equal(copilotCompactInputTokens(128_000, 50, 100_800), 64_000);
+  });
+
+  it('never goes above the safe default', () => {
+    assert.equal(copilotCompactInputTokens(128_000, 95, 100_800), 100_800);
   });
 });

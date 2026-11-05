@@ -122,7 +122,8 @@ All settings are under `openrouterModelManager.*`:
 | `defaultTemperature` | *(model default)* | Temperature from 0.0 to 2.0 |
 | `defaultMaxTokens` | *(model default)* | Maximum output tokens |
 | `defaultReasoningEffort` | *(model default)* | Thinking effort when Copilot has not set one: `none`, `minimal`, `low`, `medium`, `high`, `xhigh` or `max` |
-| `maxInputTokensOverride` | *(auto)* | Caps the context size reported to Copilot, so compaction starts earlier |
+| `autoCompactPercent` | *(default)* | Compact once the conversation fills this share of the context window (10–95). It can only compact earlier than the default |
+| `maxInputTokensOverride` | *(auto)* | Caps the context size reported to Copilot, so compaction starts earlier; wins over `autoCompactPercent` |
 | `apiEndpoint` | `https://openrouter.ai/api/v1` | Custom API endpoint or proxy |
 | `enablePromptCaching` | `true` | OpenRouter prompt caching; cuts input-token costs in agent mode |
 | `enableStreamUsage` | `true` | Request token usage while streaming; turn off if a provider answers `invalid_json` |

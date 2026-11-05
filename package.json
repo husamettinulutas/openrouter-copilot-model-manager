@@ -2,7 +2,7 @@
   "name": "openrouter-copilot-model-manager",
   "displayName": "OpenRouter Copilot Model Manager",
   "description": "Browse, filter, and add OpenRouter models to VS Code Copilot Chat with a rich visual interface. Supports pricing display, capability filtering (text/vision/tools), and one-click Copilot integration.",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "license": "MIT",
   "publisher": "husamettinulutas",
   "author": {
@@ -226,6 +226,16 @@
           "default": null,
           "description": "Override the maxInputTokens reported to VS Code for all models. Lower values trigger conversation compaction (summarization of older messages) earlier, preventing oversized request bodies. Leave empty to auto-calculate from each model's context window. Recommended: 200000 for most use cases.",
           "minimum": 4096
+        },
+        "openrouterModelManager.autoCompactPercent": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "default": null,
+          "minimum": 10,
+          "maximum": 95,
+          "markdownDescription": "Compact the conversation once it fills this share of the model's context window (10–95%). Lower values keep the context smaller and compact more often. Leave empty for the default. It can only make compaction happen earlier than the default (about 80% of the window, less room for output), and `#openrouterModelManager.maxInputTokensOverride#` takes precedence when set."
         },
         "openrouterModelManager.defaultReasoningEffort": {
           "type": [

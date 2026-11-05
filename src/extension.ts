@@ -97,10 +97,15 @@ export function activate(context: vscode.ExtensionContext) {
     )
   );
 
-  // The provider offers the utility model to Copilot, so changes must reach it.
+  // The provider offers the utility model to Copilot and reports each model's
+  // input limit (the compaction point), so changes to either must reach it.
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('openrouterModelManager.utilityModel')) {
+      if (
+        e.affectsConfiguration('openrouterModelManager.utilityModel') ||
+        e.affectsConfiguration('openrouterModelManager.maxInputTokensOverride') ||
+        e.affectsConfiguration('openrouterModelManager.autoCompactPercent')
+      ) {
         openRouterProvider.refresh();
       }
     })

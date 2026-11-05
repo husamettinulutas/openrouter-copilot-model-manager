@@ -16,7 +16,14 @@ import {
   buildThinkingEffortSchema,
   resolveReasoningEffort,
 } from '../utils/reasoningEffort';
-import { COPILOT_USAGE_MIME, CopilotUsage, estimatedUsage, normalizeUsage } from '../utils/usage';
+import {
+  COPILOT_USAGE_MIME,
+  CopilotUsage,
+  autoCompactPercent,
+  copilotCompactInputTokens,
+  estimatedUsage,
+  normalizeUsage,
+} from '../utils/usage';
 
 // ─── Configuration helper ────────────────────────────────────────────────────
 
@@ -1329,7 +1336,8 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
    * providers reject with parse errors ("invalid_json").
    *
    * Formula: (contextLength - maxOutputTokens) × 0.90  (10% safety margin)
-   * The user can also override this entirely via settings.
+   * `autoCompactPercent` lowers it to a share of the context window, and
+   * `maxInputTokensOverride` replaces it entirely.
    */
   private calculateMaxInputTokens(contextLength: number, maxOutputTokens: number): number {
     // User override takes priority
@@ -1342,15 +1350,21 @@ export class OpenRouterChatProvider implements vscode.LanguageModelChatProvider 
     const rawContext = contextLength || 128000;
     const outputReserve = maxOutputTokens || 4096;
 
-    // Subtract output tokens and apply 10% safety margin
-    const effectiveInput = Math.floor((rawContext - outputReserve) * 0.90);
+    // Subtract output tokens and apply 10% safety margin; a chosen compaction
+    // point can only lower that.
+    const compactPercent = autoCompactPercent(getConfig<number | null>('autoCompactPercent', null));
+    const effectiveInput = copilotCompactInputTokens(
+      rawContext,
+      compactPercent,
+      Math.floor((rawContext - outputReserve) * 0.90),
+    );
 
     // Clamp to reasonable bounds: at least 8K, at most 900K
     const clamped = Math.max(8192, Math.min(effectiveInput, 900_000));
 
     Logger.info(
       `maxInputTokens: context=${rawContext}, output=${outputReserve}, ` +
-      `effective=${effectiveInput}, clamped=${clamped}`,
+      `compactAt=${compactPercent ?? 'default'}%, effective=${effectiveInput}, clamped=${clamped}`,
     );
 
     return clamped;

@@ -57,3 +57,33 @@ export function estimatedUsage(promptTokens: number, completionTokens: number): 
   const completion = Math.max(0, Math.round(completionTokens));
   return { prompt_tokens: prompt, completion_tokens: completion, total_tokens: prompt + completion };
 }
+
+/** Bounds of the `openrouterModelManager.autoCompactPercent` setting. */
+export const AUTO_COMPACT_MIN_PERCENT = 10;
+export const AUTO_COMPACT_MAX_PERCENT = 95;
+
+/**
+ * The `openrouterModelManager.autoCompactPercent` setting as a whole
+ * percentage, clamped to 10–95. Undefined (empty, 0 or not a number) means
+ * "use the default compaction point".
+ */
+export function autoCompactPercent(value: unknown): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) { return undefined; }
+  return Math.min(AUTO_COMPACT_MAX_PERCENT, Math.max(AUTO_COMPACT_MIN_PERCENT, Math.round(value)));
+}
+
+/**
+ * The maxInputTokens Copilot should see for a model when the user picked a
+ * compaction point. Copilot compacts once the prompt no longer fits in
+ * maxInputTokens, so a lower value compacts earlier. The result never exceeds
+ * `safeDefault` (the window minus output room and a safety margin), because a
+ * prompt above that can be rejected before Copilot gets to compact it.
+ */
+export function copilotCompactInputTokens(
+  contextLength: number,
+  percent: number | undefined,
+  safeDefault: number,
+): number {
+  if (percent === undefined) { return safeDefault; }
+  return Math.min(safeDefault, Math.floor(contextLength * (percent / 100)));
+}

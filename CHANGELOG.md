@@ -3,6 +3,14 @@
 All notable changes to **OpenRouter Copilot Model Manager** are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.4]
+
+**Choose when the conversation compacts.**
+
+- **New setting `openrouterModelManager.autoCompactPercent`.** Set it to a share of the context window (10–95). Copilot then summarizes the conversation once it gets that full: the extension reports a smaller `maxInputTokens`, and Copilot compacts as soon as the prompt no longer fits. The summary is written by the model itself and covers the task, progress and next steps, so work continues from it. A lower value keeps the context smaller and compacts more often. Left empty, nothing changes.
+- The setting can only move compaction earlier than the default (about 80% of the window, less room for the reply). A later point could let a prompt be rejected before Copilot compacts it. `openrouterModelManager.maxInputTokensOverride` still wins when it is set.
+- **Both settings apply right away.** Changing `autoCompactPercent` or `maxInputTokensOverride` now refreshes Copilot's models without a reload.
+
 ## [1.3.3]
 
 **Copilot Chat now shows how much context you have used.**
